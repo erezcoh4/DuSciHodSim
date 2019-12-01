@@ -21,15 +21,19 @@ Bar::Bar(float flength, float fwidth, float fthickness, Vector3 fcenter) {
     center = Vector3();
     
     // construct faces
+    // Face( side_1, side_2, center, theta, phi)
+    
     // top and bottom   - in y direction
-    face_top    = Face( length, width, fcenter + Vector3( 0 , 0.5 * thickness , 0 ) );
-    face_bottom = Face( length, width, fcenter - Vector3( 0 , 0.5 * thickness , 0 ) );
+    face_top = Face( length, width, fcenter + Vector3( 0 , 0.5 * thickness , 0 ) , 0 , 0);
+    face_bottom = Face( length, width, fcenter - Vector3( 0 , 0.5 * thickness , 0 ) , Pi, 0);
+    
     // left and right   - in x direction
-    face_left   = Face( length, thickness, fcenter + Vector3( 0.5 * width , 0 , 0) );
-    face_right  = Face( length, thickness, fcenter - Vector3( 0.5 * width , 0 , 0) );
+    face_left = Face( length, thickness, fcenter + Vector3( 0.5 * width , 0 , 0) , 0 , Pi/2);
+    face_right = Face( length, thickness, fcenter - Vector3( 0.5 * width , 0 , 0) , 0 , -Pi/2);
+    
     // front and back   - in z direction
-    face_front  = Face( width, thickness, fcenter + Vector3( 0 , 0 , 0.5 * length) );
-    face_back   = Face( width, thickness, fcenter - Vector3( 0 , 0 , 0.5 * length) );
+    face_front = Face( width, thickness, fcenter + Vector3( 0 , 0 , 0.5 * length) , Pi/2 , 0 );
+    face_back = Face( width, thickness, fcenter - Vector3( 0 , 0 , 0.5 * length) , -Pi/2 , 0 );
     
 }
 

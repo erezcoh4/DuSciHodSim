@@ -3,18 +3,20 @@
 
 #include <iostream>
 #include <math.h>
+#define Pi 3.141528
 
 class Vector3
 {
 private:
 
-	float x, y, z;
-	float theta; 	// with respect to z-axis
-	float phi;	// in x-y plane, with respect to x-axis
 
 
 
 public:
+    
+    float x, y, z;
+    float theta;     // with respect to z-axis
+    float phi;    // in x-y plane, with respect to x-axis
 
 	// Setters
    	void 	    SetX(float fin) {x = fin;};
@@ -42,12 +44,25 @@ public:
     
     
     // Constructor
-    Vector3(){
-        SetXYZ(0,0,0);
-    }
+    Vector3(float fx=0, float fy=0, float fz=0){
+        SetXYZ(fx,fy,fz);
+    };
     
     
-    
+    // operators
+    Vector3 operator+(Vector3 v) {
+        x = x + v.x;
+        y = y + v.y;
+        z = z + v.z;
+        return *this;
+    };
+    Vector3 operator-(Vector3 v) {
+        x = x - v.x;
+        y = y - v.y;
+        z = z - v.z;
+        return *this;
+    };
+
             
 	// Print
 	void 	   Print() {

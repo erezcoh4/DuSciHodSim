@@ -26,8 +26,9 @@ private:
 
 public:
 
-    // constructor
-    Bar();
+    // constructors
+    Bar(){};
+    Bar(float flength=1, float fwidth=1, float fthickness=1, Vector3 fcenter=Vector3());
     
 
 

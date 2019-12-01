@@ -26,7 +26,7 @@ private:
 public:
     
     // verbosity
-    int verbose=2;
+    int verbose;
 
     // constructors
     Face();
@@ -35,7 +35,9 @@ public:
     // Setters
     void    SetVerbose (int fverbose=0) {verbose = fverbose;};
     void  SetQuietMode () {verbose = 0;};
-	
+    void        SetPhi (float fin) {theta = fin;};
+    void      SetTheta (float fin) {phi = fin;};
+
 
 
     // Getters
@@ -58,7 +60,10 @@ public:
     float          GetC4y () {return corner_4.y;};
     float          GetC4z () {return corner_4.z;};
 
+    float          GetPhi () {return theta;};
+    float        GetTheta () {return phi;};
     
+
     
 };
 
