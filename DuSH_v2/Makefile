@@ -5,14 +5,19 @@
 #
 
 CXX      := -c++
-CXXFLAGS := -pedantic-errors -Wall -Wextra -Werror
+CXXFLAGS := -pedantic-errors -Wall -Wextra -Werror -std=c++11
+
+INCFLAGS  = -I.                       #Include itself
+
 LDFLAGS  := -L/usr/lib -lstdc++ -lm
-LDFLAGS += -L$(shell root-config --libdir) -lEG -lSpectrum -lHist
+LDFLAGS += -L$(shell root-config --libdir) -lEG -lSpectrum -lHist -lTree
+LDFLAGS += -L$(shell root-config --cflags --libs) -lPhysics
 BUILD    := ./build
 OBJ_DIR  := $(BUILD)/objects
 APP_DIR  := $(BUILD)/apps
 TARGET   := program
-INCLUDE  := -Iinclude/
+INCLUDE  := -Iinclude/ -I/usr/local/Cellar/root/6.14.04_1/include/root/
+
 SRC      :=                      	\
    $(wildcard src/FaceModule/*.cpp) \
    $(wildcard src/BarModule/*.cpp) 	\

@@ -1,0 +1,10 @@
+open src/*/*.cpp src/*.cpp include/*/*.hpp Makefile -a xcode
+
+
+v2 Dec-2, 2019
+Changes from v1:
+------------------
+1) compiled with ROOT cern libraries using 
+	LDFLAGS += -L$(shell root-config --libdir) -lEG -lSpectrum -lHist
+
+2) added version.hpp

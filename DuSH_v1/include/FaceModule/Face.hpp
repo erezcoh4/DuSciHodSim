@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "Auxiliary/Vector3.hpp"
+#include "TVector3.h"
 
 class Face
 {
@@ -13,8 +14,8 @@ private:
 	float side_1, side_2; 
 
 	// position [mm]
-	Vector3 center;
-	Vector3 corner_1, corner_2, corner_3, corner_4;
+	TVector3 center;
+	TVector3 corner_1, corner_2, corner_3, corner_4;
 
 
 	// plane orientation in spherical coordinates
@@ -41,11 +42,11 @@ public:
 
 
     // Getters
-    Vector3     GetCenter () {return center;};
-    Vector3    GetCorner1 () {return corner_1;};
-    Vector3    GetCorner2 () {return corner_2;};
-    Vector3    GetCorner3 () {return corner_3;};
-    Vector3    GetCorner4 () {return corner_4;};
+    TVector3     GetCenter () {return center;};
+    TVector3    GetCorner1 () {return corner_1;};
+    TVector3   GetCorner2 () {return corner_2;};
+    TVector3   GetCorner3 () {return corner_3;};
+    TVector3   GetCorner4 () {return corner_4;};
 	
     float          GetC1x () {return corner_1.x;};
     float          GetC1y () {return corner_1.y;};
