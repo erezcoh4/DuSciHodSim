@@ -5,7 +5,7 @@
 
 // ------------------------------------------------------- //
 Face::Face(double fside_1, double fside_2, TVector3 fcenter, double ftheta, double fphi) {
-    verbose=2;
+    verbose=0;
     center = fcenter;
     center.SetPhi(fphi);
     center.SetTheta(ftheta);

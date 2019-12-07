@@ -11,12 +11,12 @@ INCFLAGS  = -I.                       #Include itself
 
 LDFLAGS  := -L/usr/lib -lstdc++ -lm
 LDFLAGS += -L$(shell root-config --libdir) -lEG -lSpectrum -lHist -lTree
-LDFLAGS += -L$(shell root-config --cflags --libs) -lPhysics
+LDFLAGS += -L$(shell root-config --cflags --libs) -lPhysics -lGeom -lCFITSIO
 BUILD    := ./build
 OBJ_DIR  := $(BUILD)/objects
 APP_DIR  := $(BUILD)/apps
 TARGET   := program
-INCLUDE  := -Iinclude/ -I/usr/local/Cellar/root/6.14.04_1/include/root/
+INCLUDE  := -Iinclude/ -I/usr/local/Cellar/root/6.18.04_1/include/root/
 
 SRC      :=                      	\
    $(wildcard src/FaceModule/*.cpp) \
