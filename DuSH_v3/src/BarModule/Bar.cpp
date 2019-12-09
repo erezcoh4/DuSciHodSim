@@ -8,9 +8,31 @@
 Bar::Bar (const char *name, Double_t dx, Double_t dy, Double_t dz, Double_t *origin):
 TGeoBBox( name, dx, dy, dz, origin ){
     std::cout << "built TGeoBBox" << std::endl;
+    //    double dx = width, dy = thickness, dz = length;
+    length = dz;
+    width = dx;
+    thickness = dy;
+    defineFacets();
 }
 
-
+void Bar::defineFacets(){
+    
+  facetNames = {
+       "Top",  "Bottom" ,
+       "Left", "Right" ,
+       "Back", "Front"};
+   
+   facetCenters = {
+       TVector3(0,thickness/2,0),     TVector3(0,-thickness/2,0),
+       TVector3(width/2,0,0),     TVector3(-width/2,0,0),
+       TVector3(0,0,-length/2),    TVector3(0,0,length/2)};
+   
+   facetNormals = {
+       TVector3(0,1,0),    TVector3(0,-1,0),
+       TVector3(1,0,0),    TVector3(-1,0,0),
+       TVector3(-1,0,0),    TVector3(1,0,0)
+   };
+}
 
 
 // ------------------------------------------------------- //

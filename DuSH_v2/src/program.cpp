@@ -34,7 +34,7 @@ int main(int argc, char **argv){
     // (2) shoot a proton onto the paddle
     
     // (3) produce scintillation photons in paddle
-    for (int photonIdx=1; photonIdx <= Nphotons; photonIdx++ ) {        
+    for (int photonIdx=1; photonIdx <= Nphotons; photonIdx++ ) {
         Photon * photon = new Photon( sprintf() );
     }
     

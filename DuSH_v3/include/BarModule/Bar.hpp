@@ -9,6 +9,7 @@
 //#include "Auxiliary/Vector3.hpp"
 #include "FaceModule/Face.hpp"
 #include "TGeoBBox.h"
+#include "TVector3.h"
 
 class Bar: public TGeoBBox
 {
@@ -20,19 +21,28 @@ private:
 	// position [mm]
 	TVector3 center;
     Face    face_top, face_bottom, face_left, face_right, face_front, face_back;
+
+    double length, width, thickness;
+    
+
     
     
 
 
 
 public:
+    
+    std::vector<std::string> facetNames;
+    std::vector<TVector3>    facetCenters, facetNormals;
 
+    
+    void defineFacets();
+    
     // constructors
-    Bar(){};
-//    Bar(double flength=1, double fwidth=1, double fthickness=1, TVector3 fcenter=TVector3());
+    Bar(){    length = 0; width = 0; thickness = 0; };
+
     Bar (const char *name, Double_t dx, Double_t dy, Double_t dz, Double_t *origin=0);
 
-//    void Print();
 };
 
 #endif
