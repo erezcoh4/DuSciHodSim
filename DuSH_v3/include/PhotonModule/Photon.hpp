@@ -49,6 +49,9 @@ public:
     
     TVector3 TrajIntWithPlane (const TVector3 &planeCenter, const  TVector3 &planeNormal);
     
+    // print
+    void PrintTrajectory();
+    
 };
 
 #endif

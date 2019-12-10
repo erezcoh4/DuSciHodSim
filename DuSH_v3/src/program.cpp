@@ -5,13 +5,14 @@
 #include "TApplication.h"
 #include "TRandom3.h"
 #include "TView.h"
-
+#define MAXPHOTONSTEPS 3
 
 int main(int argc, char **argv){
     
     int verbose = 0;
-    if (argc>0) {
-        sscanf(argv[0], "%d", &verbose);
+    if (argc>1) {
+        verbose = atoi(argv[1]);
+        std::cout << "verbose: " << verbose << std::endl;
     }
     
     // defenitions
@@ -26,7 +27,7 @@ int main(int argc, char **argv){
     Double_t x, y, z;
     
     // define App
-    TApplication theApp("tapp", &argc, argv);
+//    TApplication theApp("tapp", &argc, argv);
     
     
     // (1) build scintillation bar
@@ -34,36 +35,25 @@ int main(int argc, char **argv){
     Bar * bar = new Bar("Scintillation bar", dx/2, dy/2, dz/2);
     bar->Print();
     
-    //    std::vector<std::string> facetNames = {
-    //        "Top",  "Bottom" ,
-    //        "Left", "Right" ,
-    //        "Back", "Front"};
-    //
-    //    std::vector<TVector3>    facetCenters = {
-    //        TVector3(0,dy/2,0),     TVector3(0,-dy/2,0),
-    //        TVector3(dx/2,0,0),     TVector3(-dx/2,0,0),
-    //        TVector3(0,0,-dz/2),    TVector3(0,0,dz/2)};
-    //
-    //    std::vector<TVector3>    facetNormals = {
-    //        TVector3(0,1,0),    TVector3(0,-1,0),
-    //        TVector3(1,0,0),    TVector3(-1,0,0),
-    //        TVector3(-1,0,0),    TVector3(1,0,0)
-    //    };
-    
-    
     // display
     TCanvas *c = new TCanvas("c", "c",100,100,1000,1000);
     bar -> Draw();
     
-    
-    
+        
     
     // (2) shoot a proton onto the paddle
+    // T.B.D.
+    
+    
     
     // (3) produce scintillation photons in paddle and propagate them
     int Npoints = 2;
     
     for (int photonIdx=1; photonIdx <= Nphotons; photonIdx++ ) {
+        if (verbose>1){
+            std::cout << "------------------------------------------------" << std::endl;
+            std::cout << "generating photon " << photonIdx << std::endl;
+        }
         Photon * photon = new Photon (Npoints);
         
         // (3.0) choose photon production location
@@ -77,8 +67,12 @@ int main(int argc, char **argv){
         bool photonInBar = true;
         
         while (photonInBar) {
+            
             photon -> SetTrajectoryDirec( photonDirection );
             photon -> SetTrajectoryStart( photonStartPosition );
+            if (verbose>2){
+                photon -> PrintTrajectory();
+            }
             
             // (3.2) Decide if the paddle bounding box could be crossed by a vector.
             // intersect with paddle facets determines photon end position...
@@ -91,31 +85,30 @@ int main(int argc, char **argv){
                     
                     TVector3 FacetIntersection =
                     photon -> TrajIntWithPlane ( bar->facetCenters.at(facetIdx), bar->facetNormals.at(facetIdx) );
+                    
                     if (FacetIntersection.x()!=FacetIntersection.y() && FacetIntersection.x()!=FacetIntersection.z()){
                         
-                        if (verbose>2) {
-                            std::cout << foundIntersectionPoint << " " << facetIdx << std::endl;
-                            FacetIntersection.Print();
+                        if (verbose>3) {
+                            std::cout << "bar->facetCenters.at(" << facetIdx << ").Print():" << std::endl;
+                            bar->facetCenters.at(facetIdx).Print();
                         }
-                        
-                        
                         
                         if (    abs(FacetIntersection.x()) <= dx/2
                             &&  abs(FacetIntersection.y()) <= dy/2
                             &&  abs(FacetIntersection.z()) <= dz/2 ){
                             
-                            if (verbose>2) {
+                            if (verbose>4) {
                                 std::cout << bar->facetNames.at(facetIdx) << " facet Intersection at" << std::endl;
+                                FacetIntersection.Print();
+                                std::cout << "flip photon direction, intersection at " << bar->facetNames.at(facetIdx) << std::endl;
                             }
-                            FacetIntersection.Print();
-                            
+                                                        
                             photonEndPosition = FacetIntersection;
                             foundIntersectionPoint = true;
                             //                continue;
 
                             // flip photon direction
                             if (bar->facetNames.at(facetIdx) == "top" || bar->facetNames.at(facetIdx) == "bottom"){
-                            
                                 photonDirection.SetY( -photonDirection.y() );
                             }
                             else if (bar->facetNames.at(facetIdx) == "left" || bar->facetNames.at(facetIdx) == "right") {
@@ -133,34 +126,39 @@ int main(int argc, char **argv){
                             // ToDo: add a condition for the photon to emerge out of the
                             // paddle also if its angle is smaller than the critical angle
                             // for total internal reflection
-                            if (bar->facetNames.at(facetIdx) == "front"){
+                            std::cout << "bar->facetNames.at(facetIdx) , Npoints:"  << std::endl;
+                            std::cout << bar->facetNames.at(facetIdx) << "," << Npoints  << std::endl;
+                            if (bar->facetNames.at(facetIdx) == "front" || Npoints >= MAXPHOTONSTEPS){
                                 photonInBar = false;
                             }
                         }
                         else {
-                            std::cout << std::endl;
+                            if (verbose>4) {
+                                std::cout << "intersection point of photon with plane not in one of the facets" << std::endl;
+                            }
                         }
                     }
-                    std::cout << std::endl;
+                    if (verbose>2){
+                        std::cout << "done stepping through facet " << facetIdx << std::endl << std::endl;
+                    }
                 }
             }
             
+            photon -> SetPoint(Npoints,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
+            photonStartPosition = photonEndPosition;
+            Npoints = Npoints + 1;
             if (verbose>2) {
                 std::cout << "photonEndPosition" << std::endl;
                 photonEndPosition.Print();
-            }
-            
-            photon -> SetPoint(Npoints,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
-            
-            photonStartPosition = photonEndPosition;
-            
-            Npoints = Npoints + 1;
-                        
-            if (verbose>2) {
                 std::cout << "Npoints: " << Npoints << std::endl;
+                std::cout << "photonInBar: " << photonInBar << std::endl;
             }
         }
         photon -> Draw();
+        if (verbose>1){
+            std::cout << "done photon " << photonIdx << std::endl;
+            std::cout << "------------------------------------------------" << std::endl;
+        }
     }
     
     // update canvas
@@ -169,7 +167,7 @@ int main(int argc, char **argv){
     c -> Update();
     
     // run programm
-    theApp.Run();
+//    theApp.Run();
     std::cout << argc << strlen(argv[0]) << std::endl;
     return 0;
 }

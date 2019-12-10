@@ -65,17 +65,23 @@ TVector3 Photon::TrajIntWithPlane(
     Double_t denom = planeNormal.Dot( trajectoryDirec );
 //    planeNormal.Print();
 //    trajectoryDirec.Print();
-    std::cout << "denom: " << denom << std::endl;
-    planeCenter.Print();
+    std::cout << "Photon::TrajIntWithPlane(), "
+    << "denom: " << denom
+    << ". planeCenter: " << "(" << planeCenter.X() << "," << planeCenter.X() << "," << planeCenter.Z() << "), "
+    << std::endl;
+    
     
     if (denom != 0.0) {
-        Double_t t = ((planeCenter.x() - trajectoryStart.x()) * planeNormal.x() +
-              (planeCenter.y() - trajectoryStart.y()) * planeNormal.y() +
-              (planeCenter.z() - trajectoryStart.z()) * planeNormal.z()) / denom;
-
+        Double_t t = (
+                      (planeCenter.x() - trajectoryStart.x()) * planeNormal.x() +
+                      (planeCenter.y() - trajectoryStart.y()) * planeNormal.y() +
+                      (planeCenter.z() - trajectoryStart.z()) * planeNormal.z()
+                      )
+                    / denom;
+        
         return trajectoryStart + (t * trajectoryDirec);
     } else {
-    ::Warning("Photon::IntersectionPointOfCurrentTrajectoryWithPlane()", "No intersection point found : (plane || track)");
+        ::Warning("Photon::TrajIntWithPlane()", "No intersection point found : (plane || track)");
         return TVector3(-9999,-9999,-9999);
     }
     return TVector3(-9999,-9999,-9999);
@@ -83,3 +89,12 @@ TVector3 Photon::TrajIntWithPlane(
 
 
 
+// ------------------------------------------------------- //
+void Photon::PrintTrajectory(){
+    std::cout << "photon trajectory: "
+    << std::endl
+    << "origin: (" << trajectoryStart.X() << "," << trajectoryStart.Y() << "," << trajectoryStart.Z() << "), "
+    << std::endl
+    << "direction: (" << trajectoryDirec.X() << "," << trajectoryDirec.Y() << "," << trajectoryDirec.Z() << "), "
+    << std::endl;
+}
