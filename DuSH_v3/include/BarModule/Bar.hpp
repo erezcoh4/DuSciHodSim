@@ -35,7 +35,10 @@ public:
     std::vector<std::string> facetNames;
     std::vector<TVector3>    facetCenters, facetNormals;
 
-    
+    double       GetLength () {return length;};
+    double        GetWidth () {return width;};
+    double    GetThickness () {return thickness;};
+
     void defineFacets();
     
     // constructors
