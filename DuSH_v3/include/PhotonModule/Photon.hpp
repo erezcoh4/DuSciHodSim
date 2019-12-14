@@ -21,18 +21,20 @@
 class Photon: public TPolyLine3D
 {
 private:
-
     
+    bool        photonInBar; // is the photon inside a scintillation bar?
     Int_t       Npoints, verbose;
     TVector3    photonStartPosition, photonEndPosition, photonDirection;
     TVector3    trajectoryStart;
     TVector3    trajectoryDirec;
-
+    
     TRandom3 * r;
     Double_t x, y, z;
-
+    
+    bool        PhotonGoingForward, PhotonGoingBackward, PhotonGoingLeft, PhotonGoingRight, PhotonGoingUp, PhotonGoingDown;
+    
 public:
-
+    
     
     
     
@@ -40,32 +42,40 @@ public:
     Photon(){verbose=0;};
     Photon(Int_t n, Int_t fverbose=0);
     //    Photon(Int_t n, Double_t *p, Option_t *option=""); delete by Dec-20
-
+    
     
     // setters
-    void SetTrajectoryStart (TVector3 v) { trajectoryStart = v;};
-    void SetTrajectoryDirec (TVector3 v) { trajectoryDirec = v;};
-    void         SetVerbose (int v)      { verbose = v;};
-
+    void            SetTrajectoryStart (TVector3 v) { trajectoryStart = v;};
+    void            SetTrajectoryDirec (TVector3 v);
+    void                    SetVerbose (int v)      { verbose = v;};
+    void                      SetInBar ()           { photonInBar = true; }
+    void                 SetOutsideBar ()           { photonInBar = false; }
+    
     // getters
-    TVector3 GetTrajectoryStart () { return trajectoryStart;};
-    TVector3 GetTrajectoryDirec () { return trajectoryDirec;};
-
+    TVector3        GetTrajectoryStart () { return trajectoryStart;};
+    TVector3        GetTrajectoryDirec () { return trajectoryDirec;};
+    
     
     // geometry
-//    TVector3 findIntersectionLinePlane(const TVector3 &pos, const TVector3 &dir,
-//                                       const TVector3 &planeCenter, const  TVector3 &planeNormal);
-
+    //    TVector3 findIntersectionLinePlane(const TVector3 &pos, const TVector3 &dir,
+    //                                       const TVector3 &planeCenter, const  TVector3 &planeNormal);
     
-    TVector3 TrajIntWithPlane (const TVector3 planeCenter, const  TVector3 planeNormal);
+    double                      rad2deg (double angle_rad) {return angle_rad*180./3.1415;};
+    double                      deg2rad (double angle_deg) {return angle_deg*3.1415/180.;};
+    TVector3           TrajIntWithPlane (const TVector3 planeCenter, const  TVector3 planeNormal);
     
     // propagation
-    void    EmissionIsotropically (TVector3 emissionPos);
-    void        PropagateInPaddle (Bar * bar);
+    void          EmissionIsotropically (TVector3 emissionPos);
+    void              PropagateInPaddle (Bar * bar);
+    double  GetTrajectoryAngleWithPlane (Bar * bar, int facetIdx);
+    void                  ApplySnellLaw (Bar * bar, int facetIdx);
+    bool        PhotonTrajOppositeFacet (std::string facetName);
     
     // print
     void          PrintTrajectory ();
-    
+    void           DrawTrajectory (int trajColor=1);
+    void                    Debug (Int_t verobosity_level, std::string text)
+    { if ( verbose > verobosity_level ) std::cout << text << std::endl; };
 };
 
 #endif

@@ -2,8 +2,12 @@
 #define VERSION_HPP
 
 #include <iostream>
+#include <iomanip>
+#define PrintEmptyLine(){ std::cout << std::endl;}
 #define PrintLine(){ std::cout << "------------------------------------------------" << std::endl;}
 #define PrintXLine(){ std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;}
+#define PrintTVector3(v){ std::cout <<setprecision(1)<<fixed << #v<< ": ("<<v.X()<<","<<v.Y()<<","<<v.Z()<<")"<< std::endl;}
+
 
 class version
 {
@@ -43,6 +47,9 @@ public:
         PrintLine();
     } ;
     
+    
+    // prints
+    void Debug (Int_t verobosity_level, std::string text) { if ( verbose > verobosity_level ) std::cout << text << std::endl; }
     
     
         
