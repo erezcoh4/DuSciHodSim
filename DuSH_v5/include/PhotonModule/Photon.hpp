@@ -4,7 +4,7 @@
 /*
  A photon class
  generated Dec-7, 2019
- last edit Dec-7, 2019
+ last edit Dec-21, 2019
  
  We use geometrical optics, and so a photon will be charecterised as a 3D polynomial line of segments, and hence inherit from TPolyLine3D. Each segement is started from last position and ends either at infinity or at an elastic scattering in one of the scintillation bar faces
  */
@@ -15,6 +15,7 @@
 #include "TRandom3.h"
 #include <BarModule/Bar.hpp>
 #include "Auxiliary/version.hpp"
+#include "Auxiliary/auxiliary.hpp"
 
 
 
@@ -22,14 +23,15 @@ class Photon: public TPolyLine3D
 {
 private:
     
+    auxiliary   aux;
     bool        photonInBar; // is the photon inside a scintillation bar?
     bool        photonArrivedAtFrontFacet; // can the photon be read out by SiPM?
+    bool        photonAbsorbedInScintillator; // statistically, following 'absorbtion length' decay
     Int_t       Npoints, verbose;
     TVector3    ProductionPosition, ProductionDirection;
     TVector3    photonStartPosition, photonEndPosition, photonDirection;
     TVector3    trajectoryStart;
     TVector3    trajectoryDirec;
-    
     TRandom3 * r;
     Double_t x, y, z;
     
@@ -60,15 +62,12 @@ public:
     TVector3        GetTrajectoryStart () { return trajectoryStart;};
     TVector3        GetTrajectoryDirec () { return trajectoryDirec;};
     bool        GetArrivedAtFrontFacet () { return photonArrivedAtFrontFacet;};
+    bool     GetAbsorbedInScintillator () { return photonAbsorbedInScintillator;};
     TVector3     GetProductionPosition () { return ProductionPosition; }
     TVector3    GetProductionDirection () { return ProductionDirection; }
     
-    // geometry
-    //    TVector3 findIntersectionLinePlane(const TVector3 &pos, const TVector3 &dir,
-    //                                       const TVector3 &planeCenter, const  TVector3 &planeNormal);
     
-    double                      rad2deg (double angle_rad) {return angle_rad*180./3.1415;};
-    double                      deg2rad (double angle_deg) {return angle_deg*3.1415/180.;};
+    // geometry
     TVector3           TrajIntWithPlane (const TVector3 planeCenter, const  TVector3 planeNormal);
     
     // propagation

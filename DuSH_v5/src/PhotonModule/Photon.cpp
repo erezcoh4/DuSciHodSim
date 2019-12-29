@@ -17,46 +17,9 @@ TPolyLine3D( n ){
     r = new TRandom3(0);
     SetInBar();
     photonArrivedAtFrontFacet = false;
+    photonAbsorbedInScintillator = false;
 }
 
-//// ------------------------------------------------------- //
-//Photon::Photon (Int_t n, Double_t *p, Option_t *option):
-//TPolyLine3D( n, p, option ){
-//    std::cout << "built TPolyLine3D" << std::endl;
-//    Npoints = n;
-//    verbose = 0;
-//    r = new TRandom3();
-//} delete by Dec-20
-
-
-//// ------------------------------------------------------- // delete by Dec-20
-//TVector3 Photon::findIntersectionLinePlane(
-//                        const TVector3 &pos, const TVector3 &dir,
-//                        const TVector3 &planeCenter, const  TVector3 &planeNormal) {
-//    // Finds the intersection point of a straight line with any plane.
-//    // input
-//    // pos:            a point on the straight line.
-//    // dir:            direction of the straight line.
-//    // planeCenter:    a point on the plane.
-//    // planeNormal:    normal vector of the plane.
-//    //
-//    // return
-//    // pointIntersect: the intersection point (return value).
-//
-//    Double_t denom = planeNormal.Dot(dir);
-//    if (denom != 0.0) {
-//        Double_t t = ((planeCenter.x() - pos.x()) * planeNormal.x() +
-//              (planeCenter.y() - pos.y()) * planeNormal.y() +
-//              (planeCenter.z() - pos.z()) * planeNormal.z()) / denom;
-//
-//        return pos + (t * dir);
-//    } else {
-//    ::Warning("Photon::findIntersectionLinePlane()", "No intersection point found : (plane || track)");
-//        return TVector3(-9999,-9999,-9999);
-//    }
-//    return TVector3(-9999,-9999,-9999);
-//}
-//
 
 // ------------------------------------------------------- //
 TVector3 Photon::TrajIntWithPlane(
@@ -127,7 +90,7 @@ void Photon::EmitIsotropically(){
     r -> Sphere(x, y, z, 1);
     photonDirection = TVector3( x, y, z );
     SetProductionDirection( photonDirection );
-    photonEndPosition = photonStartPosition + 200 * photonDirection;
+    photonEndPosition = photonStartPosition + 5000 * photonDirection;
 }
 
 
@@ -214,7 +177,7 @@ void Photon::PropagateInPaddle( Bar * bar ){
         
         this -> SetPoint(Npoints,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
         photonStartPosition = photonEndPosition;
-        
+                
         if (verbose>2) {
             PrintTVector3(photonEndPosition);
             Debug(2, Form("Number of photon steps: %d , photonInBar: %d", Npoints-1, photonInBar) );
@@ -235,6 +198,16 @@ void Photon::PropagateInPaddle( Bar * bar ){
         }
     }
     
+    this -> DecideIfAbsorbedInScintillator();
+}
+// ------------------------------------------------------- //
+void Photon::DecideIfAbsorbedInScintillator(){
+    // effectively decide if photon is absorbed in scintillator
+    // following an 'absorbtion length' decay in the paddle
+    // by checking its total path length in the scintillator,
+    // and then statistically deciding wether or not it was absorbed
+    // CONTINUE HERE:!!
+    photonAbsorbedInScintillator
 }
 
 // ------------------------------------------------------- //
@@ -297,7 +270,7 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     // paddle also if its angle is smaller than the critical angle
     // for total internal reflection
     double photonTrajectoryAngleWithPlane = this -> GetTrajectoryAngleWithPlane( bar, facetIdx );
-    Debug(3 , Form("photon Trajectory Angle With Plane: %.1f deg.", rad2deg(photonTrajectoryAngleWithPlane)));
+    Debug(3 , Form("photon Trajectory Angle With Plane: %.1f deg.", aux.rad2deg(photonTrajectoryAngleWithPlane)));
     
     
     if ( photonTrajectoryAngleWithPlane > bar->GetTotalInternalReflectionAngle() ){ // total internal reflection

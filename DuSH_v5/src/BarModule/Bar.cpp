@@ -12,8 +12,6 @@ TGeoBBox( name, dx/2, dy/2, dz/2, origin ){
     width = dx;
     thickness = dy;
     defineFacets();
-//    refractiveIndex = 1;
-//    SetTotalInternalReflectionAngle();
 }
 
 // ------------------------------------------------------- //
@@ -44,3 +42,10 @@ void Bar::SetTotalInternalReflectionAngle(){
     std::cout << "TotalInternalReflectionAngle: " << TotalInternalReflectionAngle*180./PiRad << " deg." << std::endl;
 }
 
+// ------------------------------------------------------- //
+bool Bar::ContainsPoint(const TVector3 position) {
+    if (TMath::Abs(position.X()) > width/2.)    return false;
+    if (TMath::Abs(position.Y()) > thickness/2.)return false;
+    if (TMath::Abs(position.Z()) > length/2.)   return false;
+    return true;
+}

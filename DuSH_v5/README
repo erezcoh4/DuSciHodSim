@@ -1,7 +1,19 @@
 
 
 
+v5 Dec-20, 2019
+Changes from v4:
+------------------
+1) Added proton emission and propagation towards detector
+	(A) added ProtonModule and a Proton class
+	(B) proton emits scintillation photons
 
+
+2) Removed FaceModule
+
+3) Added "auxiliary" class and moved some of the functionality previously derived by "version" class
+
+4) photon absorbed (or not) in paddle following "radiation-length" decay
 
 
 v4 Dec-18, 2019
@@ -11,10 +23,15 @@ Changes from v3:
 First stage writing photon propagation properties
 	(A) arrived to front facet (boolean)
 	(B) emission direction (x,y,z)
+Output data will be written to 
+	/Users/erezcohen/Desktop/data/DuSiHodSim/output/csv_files/
+
 2) Added argument inputs to software
 	verbose = atoi(argv[1]);  // verbosity
 	Nphotons = atoi(argv[2]); // number of photons to generate
 	refractiveIndex = atof(argv[3]); // scintillator refractive index
+
+3) added first analysis macro to /mac/ as a Jupyter notebook that plots trapping efficiency
 	
 	
 
@@ -38,6 +55,6 @@ Changes from v1:
 
 ------------------------------------------------------------------------
 "OpenDuSi": open src/*/*.cpp src/*.cpp include/*/*.hpp Makefile -a xcode
-"LinkDuSi": ln -s build/apps/program open RunProgram
+"LinkDuSi": ln -s build/apps/program RunProgram
 
 
