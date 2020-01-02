@@ -173,13 +173,17 @@ void Proton::ProduceScintillationPhotons( Bar * bar, int Nphotons ){
         photon -> EmitIsotropically();
         photon -> PropagateInPaddle( bar );
         
-        
+        // when adding values here, also add the corresponding header label at
+        // program.cpp
+        // in "open output csv files" (around line 59)
         aux.write_photons_csv( {
             (double)photon->GetArrivedAtFrontFacet(),
             (double)photon->GetAbsorbedInScintillator(),
+            (double)photon->GetReadOutByDetector(),
             photon->GetProductionDirection().X(),
             photon->GetProductionDirection().Y(),
-            photon->GetProductionDirection().Z()
+            photon->GetProductionDirection().Z(),
+            (double)TotalPathLength
         } );
         
         

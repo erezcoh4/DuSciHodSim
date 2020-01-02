@@ -28,6 +28,7 @@ public:
     Int_t Nphotons;
     double refractiveIndex;
     double PhotonsPerMeV;
+    double PhotonAbsorbtionLength;
     
     // Setters
     void            SetVerbose (int fv)   {verbose = fv;};
@@ -39,7 +40,8 @@ public:
     Int_t          GetNphotons () {std::cout << "GetNphotons() : "<< Nphotons << std::endl; return Nphotons;};
     double  GetRefractiveIndex () {return refractiveIndex;};
     double    GetPhotonsPerMeV () {return PhotonsPerMeV;};
-    
+    double GetAbsorbtionLength () {return PhotonAbsorbtionLength;};
+
     // contructor
     version(int argc, char **argv){
         PrintLine();
@@ -56,7 +58,8 @@ public:
         Nphotons = 2;
         refractiveIndex = 1.5;
         PhotonsPerMeV = 100;
-        
+        PhotonAbsorbtionLength = 1000; // mm
+
         if (argc>1) {
             
             verbose = atoi(argv[1]);
@@ -74,7 +77,11 @@ public:
             PhotonsPerMeV =  atof(argv[3]);
             std::cout << "Photons Per MeV energy deposition: " << PhotonsPerMeV << std::endl;
         }
-        
+        if (argc>5) {
+            PhotonAbsorbtionLength =  atof(argv[5]);
+            std::cout << "Photon absorbtion length: " << PhotonAbsorbtionLength << " mm" << std::endl;
+        }
+
         PrintLine();
     } ;
     

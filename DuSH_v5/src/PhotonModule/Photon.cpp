@@ -18,6 +18,8 @@ TPolyLine3D( n ){
     SetInBar();
     photonArrivedAtFrontFacet = false;
     photonAbsorbedInScintillator = false;
+    photonReadOutByDetector = false;
+    TotalPathLength = 0;
 }
 
 
@@ -71,6 +73,7 @@ void Photon::PrintTrajectory(){
     PrintTVector3(trajectoryDirec);
     TVector3 trajEnd = trajectoryStart + 500 * trajectoryDirec;
     PrintTVector3(trajEnd);
+    Debug(2,Form("Total path length: %.1f mm",TotalPathLength));
 }
 
 // ------------------------------------------------------- //
@@ -79,8 +82,6 @@ void Photon::DrawTrajectory(int trajColor){
     this -> SetPoint(Npoints,trajEnd.X(),trajEnd.Y(),trajEnd.Z());
     this -> SetLineColor( trajColor );
 }
-
-
 // ------------------------------------------------------- //
 void Photon::EmitIsotropically(){
     // emit photon isotropically from emissionPos:
@@ -92,8 +93,6 @@ void Photon::EmitIsotropically(){
     SetProductionDirection( photonDirection );
     photonEndPosition = photonStartPosition + 5000 * photonDirection;
 }
-
-
 
 // ------------------------------------------------------- //
 bool Photon::PhotonTrajOppositeFacet(std::string facetName){
@@ -174,7 +173,7 @@ void Photon::PropagateInPaddle( Bar * bar ){
                 }
             }
         }
-        
+        TotalPathLength += (photonEndPosition - photonStartPosition).Mag();
         this -> SetPoint(Npoints,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
         photonStartPosition = photonEndPosition;
                 
@@ -198,16 +197,24 @@ void Photon::PropagateInPaddle( Bar * bar ){
         }
     }
     
-    this -> DecideIfAbsorbedInScintillator();
+    this -> DecideIfAbsorbedInScintillator( bar->GetAbsorbtionLength() );
 }
 // ------------------------------------------------------- //
-void Photon::DecideIfAbsorbedInScintillator(){
+void Photon::DecideIfAbsorbedInScintillator( double AbsorbtionLength ){
     // effectively decide if photon is absorbed in scintillator
     // following an 'absorbtion length' decay in the paddle
     // by checking its total path length in the scintillator,
     // and then statistically deciding wether or not it was absorbed
-    // CONTINUE HERE:!!
-    photonAbsorbedInScintillator
+    // by generating a random uniform number, and checking if its smaller then an exponential
+    // decay function value at the photon total path length
+    photonAbsorbedInScintillator = false;
+    
+    double random_number = r -> uniform(0.0,1.0);
+    if (random_number < exp( -TotalPathLength/AbsorbtionLength ) ){
+        photonAbsorbedInScintillator = true;
+        photonReadOutByDetector = false;
+    }
+        
 }
 
 // ------------------------------------------------------- //
@@ -223,7 +230,6 @@ void Photon::SetTrajectoryDirec (TVector3 v) {
     PhotonGoingLeft = (v.X()>0) ? true : false;
     PhotonGoingRight = !PhotonGoingLeft;
 }
-
 
 // ------------------------------------------------------- //
 double Photon::GetTrajectoryAngleWithPlane(Bar * bar, int facetIdx) {
@@ -243,7 +249,6 @@ double Photon::GetTrajectoryAngleWithPlane(Bar * bar, int facetIdx) {
     Debug(3, Form("n.Dot(v): %.2f, |n|: %.1f, |n|: %.1f, phi: %.2f",n.Dot(v),n.Mag(),v.Mag(),phi));
     return phi;
 }
-
 
 // ------------------------------------------------------- //
 void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
@@ -307,9 +312,6 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     }
     
 }
-
-
-
 
 // ------------------------------------------------------- //
 void Photon::ApplySnellDivergence( TVector3 PlaneNormal, double n_in ){

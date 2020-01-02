@@ -39,6 +39,8 @@ public:
     void                SetRefractiveIndex (double n) {refractiveIndex = n; SetTotalInternalReflectionAngle();};
     void   SetTotalInternalReflectionAngle ();
     void                  SetPhotonsPerMeV (double v) {PhotonsPerMeV = v;}
+    void                  SetPhotonsPerMeV (double v) {PhotonsPerMeV = v;}
+    void               SetAbsorbtionLength (double v) {PhotonAbsorbtionLength = v;};
 
     // getters
     double                       GetLength () {return length;};
@@ -47,6 +49,7 @@ public:
     double              GetRefractiveIndex () {return refractiveIndex;};
     double GetTotalInternalReflectionAngle () {return TotalInternalReflectionAngle;}
     double                GetPhotonsPerMeV () {return PhotonsPerMeV;}
+    double             GetAbsorbtionLength () {return PhotonAbsorbtionLength;};
     // geometry
     void                      defineFacets ();
     bool                     ContainsPoint (const TVector3 position);

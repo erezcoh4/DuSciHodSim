@@ -42,6 +42,8 @@ int main(int argc, char **argv){
     bar -> SetRefractiveIndex(refractiveIndex);
     double PhotonsPerMeV = vObj -> GetPhotonsPerMeV();
     bar -> SetPhotonsPerMeV(PhotonsPerMeV);
+    double PhotonsAbsorbtionLength = vObj -> GetAbsorbtionLength();
+    bar -> SetAbsorbtionLength(PhotonsAbsorbtionLength);
     if (verbose>2) { bar->Print(); }
     
 
@@ -56,7 +58,7 @@ int main(int argc, char **argv){
     
     // open output csv files
     std::string simname = Form("version_%.1f_n_%.2f_emit_from_center",vObj->GetVersion(),bar->GetRefractiveIndex());
-    std::string csv_header = "ArrivedAtFrontFacet,ProductionDirection_x,ProductionDirection_y,ProductionDirection_z";
+    std::string csv_header = "ArrivedAtFrontFacet,AbsorbedInScintillator,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLength";
     aux.open_photons_csv(simname , csv_header );
     
     
