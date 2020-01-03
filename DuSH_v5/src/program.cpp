@@ -10,7 +10,7 @@
 int main(int argc, char **argv){
     
     // defintions
-    auxiliary aux;
+    auxiliary * aux = new auxiliary();
     TApplication theApp("tapp", &argc, argv);
     TCanvas * c;
     bool DoDrawScene = false;     // this will be run over if verbosity > 0
@@ -19,6 +19,7 @@ int main(int argc, char **argv){
     
     
     Int_t verbose = vObj -> GetVerbose();
+    aux->SetVerbose(verbose);
     if (verbose>0) { DoDrawScene = true; std::cout << "Drawing Scene..." << std::endl;};
     // predetermined scintillation photon production
     //    Int_t Nphotons = vObj -> GetNphotons();
@@ -44,6 +45,7 @@ int main(int argc, char **argv){
     bar -> SetPhotonsPerMeV(PhotonsPerMeV);
     double PhotonsAbsorbtionLength = vObj -> GetAbsorbtionLength();
     bar -> SetAbsorbtionLength(PhotonsAbsorbtionLength);
+    bar -> SetVerbose(verbose);
     if (verbose>2) { bar->Print(); }
     
 
@@ -58,8 +60,8 @@ int main(int argc, char **argv){
     
     // open output csv files
     std::string simname = Form("version_%.1f_n_%.2f_emit_from_center",vObj->GetVersion(),bar->GetRefractiveIndex());
-    std::string csv_header = "ArrivedAtFrontFacet,AbsorbedInScintillator,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLength";
-    aux.open_photons_csv(simname , csv_header );
+    std::string csv_header =    "ArrivedAtFrontFacet,AbsorbedInScintillator,ReadOutByDetector,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLength";
+    aux -> open_photons_csv(simname , csv_header );
     
     
     
@@ -73,13 +75,13 @@ int main(int argc, char **argv){
             PrintLine();
         }
         
-        Proton * proton = new Proton (2, verbose);
+        Proton * proton = new Proton (2, verbose );
         proton -> SetProducePhotons( DoProduceScintillationPhotons );
         proton -> SetDoDrawScene( DoDrawScene );
         proton -> SetProductionPosition( ProtonGunPosition );
         proton -> SetProductionDirection( ProtonGunDirection );
         proton -> SetEnergy( ProtonGunEnergy );
-        proton -> Shoot( bar );
+        proton -> Shoot( bar , aux );
                 
         
         if (verbose>1){
@@ -90,8 +92,8 @@ int main(int argc, char **argv){
     
     // update canvas
     if (DoDrawScene) {
-        TView *view = c -> GetView();
-        view -> ShowAxis();
+        //        TView *view = c -> GetView();
+        //        view -> ShowAxis();
         c -> Update();
         // run programm
         theApp.Run();

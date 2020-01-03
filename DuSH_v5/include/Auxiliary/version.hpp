@@ -58,7 +58,7 @@ public:
         Nphotons = 2;
         refractiveIndex = 1.5;
         PhotonsPerMeV = 100;
-        PhotonAbsorbtionLength = 1000; // mm
+        PhotonAbsorbtionLength = 8000; // mm
 
         if (argc>1) {
             

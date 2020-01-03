@@ -64,6 +64,7 @@ public:
     bool        GetArrivedAtFrontFacet () { return photonArrivedAtFrontFacet;};
     bool     GetAbsorbedInScintillator () { return photonAbsorbedInScintillator;};
     bool          GetReadOutByDetector () { return photonReadOutByDetector;};
+    double          GetTotalPathLength () { return TotalPathLength; }
     TVector3        GetTrajectoryStart () { return trajectoryStart;};
     TVector3        GetTrajectoryDirec () { return trajectoryDirec;};
     TVector3     GetProductionPosition () { return ProductionPosition; }
@@ -81,6 +82,7 @@ public:
     void                  ApplySnellLaw (Bar * bar, int facetIdx);
     void           ApplySnellDivergence (TVector3 PlaneNormal,  double n_in);
     void DecideIfAbsorbedInScintillator ( double AbsorbtionLength );
+    void      DecideIfReadOutByDetector ();
     
     // print and draw
     void          PrintTrajectory ();

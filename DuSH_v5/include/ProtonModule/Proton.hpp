@@ -40,7 +40,7 @@ private:
     Int_t Nsteps;
     TGraph      *dEdx_vs_KE_proton;
     TSpline3    *dEdx_vs_KE_proton_s3;
-    auxiliary   aux;
+//    auxiliary   aux;
     
     
 public:
@@ -65,7 +65,8 @@ public:
     void             SetProducePhotons (bool fDo)   { DoProduceScintillationPhotons = fDo;};
     void       AddScintillationPhotons (Int_t N)    {   NScintillationPhotons += N;
                                                         Debug(2,Form("NScintillationPhotons: %d",NScintillationPhotons));};
-    
+    void        AddScintillationPhoton ()           {AddScintillationPhotons(1);};
+
     
     // getters
     TVector3     GetProductionPosition () { return ProductionPosition; }
@@ -73,8 +74,8 @@ public:
     double                     GetEdep ( double dx_cm = 0.1 );
     Int_t     GetNScintillationPhotons () { return NScintillationPhotons; }
     // propagation
-    void                         Shoot (Bar * bar);
-    void   ProduceScintillationPhotons (Bar * bar, int Nphotons=0);
+    void                         Shoot (Bar * bar, auxiliary * aux);
+    void   ProduceScintillationPhotons (Bar * bar, auxiliary * aux, int Nphotons=0);
     void            UpdateProtonEnergy ( double dE );
     
     

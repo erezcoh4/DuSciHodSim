@@ -16,7 +16,7 @@ private:
     
     //    // dimensions [mm]
     //    double length, width, thickness;
-    
+    Int_t   verbose;
     // position [mm]
     TVector3 center;
     //    Face    face_top, face_bottom, face_left, face_right, face_front, face_back;
@@ -25,6 +25,7 @@ private:
     double refractiveIndex;
     double TotalInternalReflectionAngle;
     double PhotonsPerMeV;
+    double PhotonAbsorbtionLength;
     
     
     
@@ -36,9 +37,9 @@ public:
     std::vector<TVector3>    facetCenters, facetNormals;
     
     // setters
+    void                        SetVerbose (int v)    { verbose = v;};
     void                SetRefractiveIndex (double n) {refractiveIndex = n; SetTotalInternalReflectionAngle();};
     void   SetTotalInternalReflectionAngle ();
-    void                  SetPhotonsPerMeV (double v) {PhotonsPerMeV = v;}
     void                  SetPhotonsPerMeV (double v) {PhotonsPerMeV = v;}
     void               SetAbsorbtionLength (double v) {PhotonAbsorbtionLength = v;};
 

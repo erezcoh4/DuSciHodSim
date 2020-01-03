@@ -209,8 +209,8 @@ void Photon::DecideIfAbsorbedInScintillator( double AbsorbtionLength ){
     // decay function value at the photon total path length
     photonAbsorbedInScintillator = false;
     
-    double random_number = r -> uniform(0.0,1.0);
-    if (random_number < exp( -TotalPathLength/AbsorbtionLength ) ){
+    double random_number = r -> Uniform(0.0,1.0);
+    if (random_number > exp( -TotalPathLength/AbsorbtionLength ) ){
         photonAbsorbedInScintillator = true;
         photonReadOutByDetector = false;
     }
@@ -251,6 +251,14 @@ double Photon::GetTrajectoryAngleWithPlane(Bar * bar, int facetIdx) {
 }
 
 // ------------------------------------------------------- //
+void Photon::DecideIfReadOutByDetector(){
+    if (!photonAbsorbedInScintillator)  { // if not absorbed in scintillator, it can be read out
+        photonReadOutByDetector = true;
+    }
+    // ToDo: add surface area covered by detector...
+}
+
+// ------------------------------------------------------- //
 void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     // This function performs the main action that happens
     // when the photon meets one of the scintillation bar facet.
@@ -268,6 +276,7 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     if (bar->facetNames.at(facetIdx) == "Front"){
         photonInBar = false;
         photonArrivedAtFrontFacet = true;
+        DecideIfReadOutByDetector();
         return;
     }
     

@@ -26,7 +26,7 @@ public:
     
     // contructor
     auxiliary(){};
-    
+    void                    SetVerbose (int v)      { verbose = v;};
     
     // prints
     void Debug (Int_t verobosity_level, std::string text) { if ( verbose > verobosity_level ) std::cout << text << std::endl; }
@@ -47,7 +47,8 @@ public:
     }
     
     void write_photons_csv( std::vector<double> values ){
-        //        for (auto v : values){ csvfile << v << ","; }
+        // for (auto v : values){ std::cout << v << ","; } std::cout << std::endl;
+        
         for (size_t i=0; i<values.size()-1; i++){
             csvfile << values.at(i) << ",";
         }
@@ -64,6 +65,18 @@ public:
     double      rad2deg (double angle_rad) {return angle_rad*180./3.1415;};
     double      deg2rad (double angle_deg) {return angle_deg*3.1415/180.;};
 
+    
+    
+//    // operators
+//    auxiliary& operator=(const auxiliary& other) {
+//        *this = other;
+////        if (this != &other) { // self-assignment check expected
+////            csvfilename = other.csvfilename;
+////            csvfile = other.csvfile;
+////            csvpath = other.csvpath;
+////        }
+//        return *this;
+//    }
 };
 
 

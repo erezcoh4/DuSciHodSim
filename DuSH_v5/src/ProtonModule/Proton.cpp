@@ -37,7 +37,7 @@ void Proton::DrawTrajectory(int trajColor){
 
 
 // ------------------------------------------------------- //
-void Proton::Shoot( Bar * bar ){
+void Proton::Shoot( Bar * bar , auxiliary * aux ){
     Debug(2, "Proton::Shoot()");
     // proton will be fired from ProductionPosition at ProductionDirection
     // if the proton will cross the scintillation bar
@@ -60,10 +60,9 @@ void Proton::Shoot( Bar * bar ){
             
             double Edep_MeV = GetEdep( dx_cm );
             Int_t Nphotons = (Int_t)(bar -> GetPhotonsPerMeV() * Edep_MeV);
-            AddScintillationPhotons( Nphotons );
             
             if (DoProduceScintillationPhotons){ // flag to suppress this for debugging purposes
-                ProduceScintillationPhotons( bar , Nphotons );
+                ProduceScintillationPhotons( bar, aux, Nphotons );
             }
             
             // of course, when the proton produced scintillation photons it looses some energy...
@@ -147,16 +146,14 @@ void Proton::UpdateProtonEnergy( double dE ){
     SetEnergyMomentum();
 }
 
-
 // ------------------------------------------------------- //
 void Proton::SetEnergyMomentum(){
     KE = Ep - Mp;
     Pp = sqrt( Ep*Ep - Mp*Mp );
 }
 
-
 // ------------------------------------------------------- //
-void Proton::ProduceScintillationPhotons( Bar * bar, int Nphotons ){
+void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphotons ){
     Debug(2 , "Proton::ProduceScintillationPhotons()");
     
     // produce scintillation photons in paddle and propagate them
@@ -176,23 +173,24 @@ void Proton::ProduceScintillationPhotons( Bar * bar, int Nphotons ){
         // when adding values here, also add the corresponding header label at
         // program.cpp
         // in "open output csv files" (around line 59)
-        aux.write_photons_csv( {
+        // CONTINUE HERE: Need to write the csv
+        aux->write_photons_csv( {
             (double)photon->GetArrivedAtFrontFacet(),
             (double)photon->GetAbsorbedInScintillator(),
             (double)photon->GetReadOutByDetector(),
             photon->GetProductionDirection().X(),
             photon->GetProductionDirection().Y(),
             photon->GetProductionDirection().Z(),
-            (double)TotalPathLength
+            photon->GetTotalPathLength()
         } );
-        
-        
-        if (DoDrawScene && (photonIdx/1000==0)) { photon -> Draw(); } // draw every 1000th photon
+                
+        if (DoDrawScene && (NScintillationPhotons % 1000 == 0)) { photon -> Draw(); } // draw every 1000th photon
         
         if (verbose>1){
             std::cout << "done photon " << photonIdx << std::endl;
             PrintLine();
         }
+        AddScintillationPhoton();
     }
     
   
