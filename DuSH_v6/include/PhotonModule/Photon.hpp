@@ -28,6 +28,7 @@ private:
     bool        photonArrivedAtFrontFacet; // can the photon be read out by SiPM?
     bool        photonAbsorbedInScintillator; // statistically, following 'absorbtion length' decay
     bool        photonReadOutByDetector; // statistically, following 'absorbtion length' decay
+    bool        photonDirectFromProduction; // has the photon hit any facet, or got to the end directly from production?
     Int_t       Npoints, verbose;
     TVector3    ProductionPosition, ProductionDirection;
     TVector3    photonStartPosition, photonEndPosition, photonDirection;
@@ -64,6 +65,7 @@ public:
     bool        GetArrivedAtFrontFacet () { return photonArrivedAtFrontFacet;};
     bool     GetAbsorbedInScintillator () { return photonAbsorbedInScintillator;};
     bool          GetReadOutByDetector () { return photonReadOutByDetector;};
+    bool       GetDirectFromProduction () { return photonDirectFromProduction; }
     double          GetTotalPathLength () { return TotalPathLength; }
     TVector3        GetTrajectoryStart () { return trajectoryStart;};
     TVector3        GetTrajectoryDirec () { return trajectoryDirec;};  
