@@ -35,7 +35,7 @@ private:
     double      Ep;             // MeV
     double      Pp;             // MeV/c
     double      KE;             // MeV
-    
+    double      time;           // time since the proton entered scintillator, in [sec]
     TRandom3 * r;
     Double_t x, y, z;
     Int_t Nsteps;
@@ -49,7 +49,7 @@ public:
     
     
     // constructors
-    Proton(Int_t n, Int_t fverbose=0);
+    Proton(double ftime, Int_t fverbose=0);
     void GenerateEdepCurves();
     
     // setters
@@ -73,11 +73,14 @@ public:
     TVector3    GetProductionDirection () { return ProductionDirection; }
     double                     GetEdep ( double dx_cm = 0.1 );
     Int_t     GetNScintillationPhotons () { return NScintillationPhotons; }
+    
     // propagation
     void                         Shoot (Bar * bar, auxiliary * aux);
     void   ProduceScintillationPhotons (Bar * bar, auxiliary * aux, int Nphotons=0);
     void            UpdateProtonEnergy ( double dE );
-    
+        
+    // time
+    void                      TickTime ( double dx , double n=1 );
     
     // print
     void               PrintTrajectory ();

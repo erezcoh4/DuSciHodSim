@@ -15,11 +15,13 @@ TPolyLine3D( n ){
         std::cout << "photon verbosity: " << verbose << std::endl;
     }
     r = new TRandom3(0);
-    SetInBar();
+    SetInBar(1);
     photonArrivedAtFrontFacet = false;
     photonAbsorbedInScintillator = false;
     photonReadOutByDetector = false;
     TotalPathLength = 0;
+    HitFrontFacetPos = TVector3(-999,-999,-999);
+    this -> SetLineColor( 1 );
 }
 
 
@@ -77,13 +79,13 @@ void Photon::PrintTrajectory(){
 }
 
 // ------------------------------------------------------- //
-void Photon::DrawTrajectory(int trajColor){
+void Photon::DrawTrajectory(){
     TVector3 trajEnd = trajectoryStart + 500 * trajectoryDirec;
     this -> SetPoint(Npoints,trajEnd.X(),trajEnd.Y(),trajEnd.Z());
-    this -> SetLineColor( trajColor );
 }
 // ------------------------------------------------------- //
-void Photon::EmitIsotropically(){
+void Photon::EmitIsotropically(double fProductionTime){
+    Debug(1,"Photon::EmitIsotropically()");
     // emit photon isotropically from emissionPos:
     // generate a photon direction on the unit sphere
     photonStartPosition = ProductionPosition;
@@ -93,6 +95,9 @@ void Photon::EmitIsotropically(){
     SetProductionDirection( photonDirection );
     photonEndPosition = photonStartPosition + 5000 * photonDirection;
     photonDirectFromProduction = true;
+    // time
+    ProductionTime = fProductionTime;
+    ExitTime = 0;
 }
 
 // ------------------------------------------------------- //
@@ -119,7 +124,8 @@ bool Photon::PhotonTrajOppositeFacet(std::string facetName){
 // ------------------------------------------------------- //
 void Photon::PropagateInPaddle( Bar * bar ){
     Debug(2 , "Photon::PropagateInPaddle()");
-    SetInBar();
+    SetInBar(bar->GetRefractiveIndex());
+    
     int LastHitFacetIdx = -1;
     
     while (photonInBar && (Npoints < MAXPHOTONSTEPS)) { // stop if number of points it too large
@@ -139,7 +145,6 @@ void Photon::PropagateInPaddle( Bar * bar ){
                 continue;
             }
             
-            
             if (foundIntersectionPoint==false && facetIdx!=LastHitFacetIdx ){
                 Debug(3, "Haven't found plane intersection");
                 
@@ -158,7 +163,13 @@ void Photon::PropagateInPaddle( Bar * bar ){
                         
                         Debug(4, "photon met scintillator facet! now apply snell law");
                         
-                        // change the flag indicating that the photon did not hit any facet on its way out if the facet it hit is not the front facet where the detector is located...
+                        // if the photon hit any facet on its way (except the front facet)
+                        // it is no longer a "direct photon" that was emitted from the proton directly
+                        // to the detector with a short path
+                        // so change the flag indicating that the photon did
+                        // not hit any facet on its way out if the facet it hit
+                        // is not the front facet where the detector is located...
+                        // once this flag is changed once, the photon will forever be falgged as non-direct
                         if (bar->facetNames.at(facetIdx) != "Front"){
                             photonDirectFromProduction = false;
                         }
@@ -196,7 +207,7 @@ void Photon::PropagateInPaddle( Bar * bar ){
         SetTrajectoryDirec( photonDirection );
         
         if (verbose>3){
-            DrawTrajectory( 4 );
+            DrawTrajectory();
             PrintTrajectory();
             Debug(3,"photon exitted from paddle!");
             PrintLine();
@@ -264,6 +275,22 @@ void Photon::DecideIfReadOutByDetector(){
     // ToDo: add surface area covered by detector...
 }
 
+
+// ------------------------------------------------------- //
+void Photon::ArriveAtFrontFacet(){
+    // if photon touched the front facet of the scintillation bar
+    // and intersected with its plane,
+    // it emerged out of the paddle
+    photonInBar = false;
+    photonArrivedAtFrontFacet = true;
+    DecideIfReadOutByDetector();
+    HitFrontFacetPos = photonEndPosition;
+    this -> SetLineColor( 4 ); // change the color of the photons that arrived at the front facet to blue
+    if (photonDirectFromProduction){
+        this -> SetLineColor( 3 ); // change the color to green if its a direct photon....
+    }
+}
+
 // ------------------------------------------------------- //
 void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     // This function performs the main action that happens
@@ -280,9 +307,7 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     // and intersected with its plane,
     // it emerged out of the paddle
     if (bar->facetNames.at(facetIdx) == "Front"){
-        photonInBar = false;
-        photonArrivedAtFrontFacet = true;
-        DecideIfReadOutByDetector();
+        ArriveAtFrontFacet();
         return;
     }
     
@@ -343,4 +368,14 @@ void Photon::ApplySnellDivergence( TVector3 PlaneNormal, double n_in ){
     
     TVector3 v_out =    n_ratio*( PlaneNormal.Cross(CrossProduct) )
     - PlaneNormal * sqrt(1 - n_ratio*n_ratio*CrossProduct.Mag2());
+}
+
+
+// ------------------------------------------------------- //
+double Photon::GetTimeFromStart () {
+    // compute the photon time,
+    // counting from the time when the proton entered the scintillator
+    //
+    ExitTime = ProductionTime + TotalPathLength / v_mm_sec;
+    return ExitTime;
 }

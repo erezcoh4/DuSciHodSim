@@ -4,16 +4,17 @@ using namespace std;
 #define MAXPROTONSTEPS 5000
 
 // ------------------------------------------------------- //
-Proton::Proton (Int_t n, int fverbose):
-TPolyLine3D( n ){
+Proton::Proton (double ftime, int fverbose):
+TPolyLine3D( 2 ){
     
-    Npoints = n;
+    Npoints = 2;
     verbose = fverbose;
     Debug( 1 , Form("Proton::Proton(), verbosity %d",verbose));
     r = new TRandom3(0);
     GenerateEdepCurves();
     DoProduceScintillationPhotons = true;
     NScintillationPhotons = 0;
+    time = ftime; // time since proton enters scintillator, in [sec]
 }
 
 
@@ -60,6 +61,7 @@ void Proton::Shoot( Bar * bar , auxiliary * aux ){
             
             double Edep_MeV = GetEdep( dx_cm );
             Int_t Nphotons = (Int_t)(bar -> GetPhotonsPerMeV() * Edep_MeV);
+            TickTime( dx_cm , bar -> GetRefractiveIndex() );
             
             if (DoProduceScintillationPhotons){ // flag to suppress this for debugging purposes
                 ProduceScintillationPhotons( bar, aux, Nphotons );
@@ -85,12 +87,38 @@ void Proton::Shoot( Bar * bar , auxiliary * aux ){
         }
         Debug(2, Form("proton propagating stepIdx %d at (%.1f,%.1f,%.1f)",stepIdx,StepPos.X(),StepPos.Y(),StepPos.Z()));
         
+        if (stepIdx%10==0) {
+            Debug(-1, Form("proton propagating stepIdx %d at (%.1f,%.1f,%.1f)",stepIdx,StepPos.X(),StepPos.Y(),StepPos.Z()));
+        }
     }
     Debug(-1, Form("done stepping through proton propagation, produced %d scintillation photons in paddle", GetNScintillationPhotons()));
     
     if (DoDrawScene) {
         DrawTrajectory();
     }
+}
+
+
+// ------------------------------------------------------- //
+void Proton::TickTime( double dx , double n ){
+    Debug(1 ,"Proton::TickTime()");
+    // compute how much time in [sec] it took for the proton to move dx in [cm]
+    // first compute the velocity
+    // E = m*c2*gamma = m*c3*(1/sqrt(c2-v2))
+    // v2 = c2 (1 - c4*m2/E2)
+    // beta = sqrt(1 - (m/E)), or v = c sqrt(1 - (mc2/E))
+    double beta = sqrt( 1 - Mp/Ep );
+    
+    // now convert to cm/sec in paddle
+    double c = 29979245800. / n; // 29979245800 [cm/sec] is the velocity in air
+    double v = c * beta; // in [cm/sec]
+
+    // finally, compute the time interval from the step size
+    double dt = dx / v;
+    
+    // and update the time since the proton entered the scintillator
+    time += dt;
+    Debug(1 ,Form("Ep=%.1f, v=%.1f, dx=%.1f, dt=%.1f, t=%.1f",Ep,v,dx,dt,time));
 }
 
 // ------------------------------------------------------- //
@@ -167,7 +195,7 @@ void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphoto
         
         Photon * photon = new Photon (2, verbose);
         photon -> SetProductionPosition( TVector3(0,0,0) );
-        photon -> EmitIsotropically();
+        photon -> EmitIsotropically( time );
         photon -> PropagateInPaddle( bar );
         
         // when adding values here, also add the corresponding header label at
@@ -182,9 +210,14 @@ void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphoto
             photon->GetProductionDirection().X(),
             photon->GetProductionDirection().Y(),
             photon->GetProductionDirection().Z(),
-            photon->GetTotalPathLength()
+            photon->GetTotalPathLength(),
+            photon->GetTimeFromStart(),
+            photon->GetHitFrontFacetPos().X(),
+            photon->GetHitFrontFacetPos().Y(),
+            photon->GetHitFrontFacetPos().Z()
         } );
                 
+        
         if (DoDrawScene && (NScintillationPhotons % ShowEveryNPhotons == 0)) { photon -> Draw(); } // draw every 1000th photon
         
         if (verbose>1){

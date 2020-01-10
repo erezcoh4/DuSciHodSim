@@ -24,17 +24,25 @@ class Photon: public TPolyLine3D
 private:
     
     auxiliary   aux;
+    
     bool        photonInBar; // is the photon inside a scintillation bar?
     bool        photonArrivedAtFrontFacet; // can the photon be read out by SiPM?
     bool        photonAbsorbedInScintillator; // statistically, following 'absorbtion length' decay
     bool        photonReadOutByDetector; // statistically, following 'absorbtion length' decay
     bool        photonDirectFromProduction; // has the photon hit any facet, or got to the end directly from production?
+    
     Int_t       Npoints, verbose;
+    
+    double      TotalPathLength;
+    double      v_mm_sec;
+    double      ProductionTime, ExitTime;
+    
     TVector3    ProductionPosition, ProductionDirection;
     TVector3    photonStartPosition, photonEndPosition, photonDirection;
     TVector3    trajectoryStart;
     TVector3    trajectoryDirec;
-    double      TotalPathLength;
+    TVector3    HitFrontFacetPos;
+    
     TRandom3 * r;
     Double_t x, y, z;
     
@@ -55,7 +63,7 @@ public:
     void            SetTrajectoryStart (TVector3 v) { trajectoryStart = v;};
     void            SetTrajectoryDirec (TVector3 v);
     void                    SetVerbose (int v)      { verbose = v;};
-    void                      SetInBar ()           { photonInBar = true; }
+    void                      SetInBar (double n)   { photonInBar = true; v_mm_sec = 3.e11/n;}
     void                 SetOutsideBar ()           { photonInBar = false; }
     void         SetProductionPosition (TVector3 v) { ProductionPosition = v; }
     void        SetProductionDirection (TVector3 v) { ProductionDirection = v; }
@@ -67,11 +75,12 @@ public:
     bool          GetReadOutByDetector () { return photonReadOutByDetector;};
     bool       GetDirectFromProduction () { return photonDirectFromProduction; }
     double          GetTotalPathLength () { return TotalPathLength; }
+    double            GetTimeFromStart ();
     TVector3        GetTrajectoryStart () { return trajectoryStart;};
     TVector3        GetTrajectoryDirec () { return trajectoryDirec;};  
-    TVector3     GetProductionPosition () { return ProductionPosition; }
-    TVector3    GetProductionDirection () { return ProductionDirection; }
-    
+    TVector3     GetProductionPosition () { return ProductionPosition; };
+    TVector3    GetProductionDirection () { return ProductionDirection; };
+    TVector3       GetHitFrontFacetPos () { return HitFrontFacetPos; };
     
     // geometry
     TVector3           TrajIntWithPlane (const TVector3 planeCenter, const  TVector3 planeNormal);
@@ -79,16 +88,17 @@ public:
     // propagation
     bool        PhotonTrajOppositeFacet (std::string facetName);
     double  GetTrajectoryAngleWithPlane (Bar * bar, int facetIdx);
-    void              EmitIsotropically ();
+    void              EmitIsotropically (double fProductionTime);
     void              PropagateInPaddle (Bar * bar);
     void                  ApplySnellLaw (Bar * bar, int facetIdx);
     void           ApplySnellDivergence (TVector3 PlaneNormal,  double n_in);
     void DecideIfAbsorbedInScintillator ( double AbsorbtionLength );
     void      DecideIfReadOutByDetector ();
+    void             ArriveAtFrontFacet (); // what happens when a photon arrives at the front facet
     
     // print and draw
     void          PrintTrajectory ();
-    void           DrawTrajectory (int trajColor=1);
+    void           DrawTrajectory ();
     void                    Debug (Int_t verobosity_level, std::string text)
     { if ( verbose > verobosity_level ) std::cout << text << std::endl; };
 };

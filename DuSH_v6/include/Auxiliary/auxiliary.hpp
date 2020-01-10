@@ -9,7 +9,7 @@
 #define PrintEmptyLine(){ std::cout << std::endl;}
 #define PrintLine(){ std::cout << "------------------------------------------------" << std::endl;}
 #define PrintXLine(){ std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;}
-#define PrintTVector3(v){ std::cout <<setprecision(1)<<fixed << #v<< ": ("<<v.X()<<","<<v.Y()<<","<<v.Z()<<")"<< std::endl;}
+#define PrintTVector3(v){ std::cout <<std::setprecision(1)<<std::fixed << #v<< ": ("<<v.X()<<","<<v.Y()<<","<<v.Z()<<")"<< std::endl;}
 
 
 class auxiliary
@@ -49,10 +49,10 @@ public:
     
     // xml configuration files
     // [https://root.cern/doc/master/xmlreadfile_8C.html]
-    void readXMLinput(std::string simname = ""){
+    int readXMLinput(std::string simname = ""){
         
         xmlfilename = xmlpath + "/" + simname + ".xml";
-        PrintLine();
+        
         std::cout << "opened input xml:" << std::endl << xmlfilename << std::endl;
         PrintLine();
         // create xml engine
@@ -60,7 +60,11 @@ public:
         // Now try to parse xml file
         // Only file with restricted xml syntax are supported
         XMLDocPointer_t xmldoc = xml.ParseFile( xmlfilename.c_str() );
-        if (!xmldoc) return;
+        if (!xmldoc) {
+            Debug(0, "Problem with input XML file! exiting.");
+            return 0;
+            
+        }
         
         // my parsing
         XMLNodePointer_t ScintillatorNode = xml.DocGetRootElement(xmldoc);
@@ -165,6 +169,7 @@ public:
         xml.FreeDoc(xmldoc);
         
         PrintLine();
+        return 1;
     }
     
     

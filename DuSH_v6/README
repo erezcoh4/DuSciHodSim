@@ -1,9 +1,13 @@
 
-v5 Jan-04, 2020
+v6 Jan-04, 2020
 Changes from v5:
 ------------------
 1) input from xml file
+
 2) define detector surface area to provide dynamic information on "photon detected by detector"
+
+3) change main input: 
+> ./RunProgram <configuration> <verbosity> 
 
 
 

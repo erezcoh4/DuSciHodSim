@@ -9,7 +9,9 @@
 
 int main(int argc, char **argv){
     
-    
+    Int_t Nprotons = 1;
+    double time = 0; // count the time since the proton entered the scintillator
+
     // start app and draw canvas
     TApplication theApp("tapp", &argc, argv);
     TCanvas * c;
@@ -19,50 +21,32 @@ int main(int argc, char **argv){
     Int_t verbose = vObj -> GetVerbose();
 
     // simulation name
-    std::string simname = Form("version_%.1f_typical",vObj->GetVersion());
+    std::string simname = Form("version_%.1f_%s",vObj->GetVersion(),vObj->GetInputName().c_str());
     // Form("version_%.1f_n_%.2f_emit_from_center",vObj->GetVersion(),bar->GetRefractiveIndex());
 
     // read input
     auxiliary * aux = new auxiliary();
     aux->SetVerbose(verbose);
-    aux->readXMLinput(simname);
-    
+    int IsXMLinput = aux->readXMLinput( vObj->GetInputName() );
+    if (IsXMLinput==0){
+        return 0;
+    }
     if (verbose>0) { DoDrawScene = true; std::cout << "Drawing Scene..." << std::endl;};
-    // predetermined scintillation photon production
-    //    Int_t Nphotons = vObj -> GetNphotons();
     
-    // defenitions
-    // ToDo: Move these to (an XML) configuration file
-    // scintillation bar dimensions [mm]
-    // double length = 2000, width = 200, thickness = 60;
-    // for debug purposes, also use a small cube
-    Int_t Nprotons = 1;
-//    double length = 2000, width = 200, thickness = 60;
-//    TVector3 ProtonGunPosition = TVector3(0,-100,0);
-//    TVector3 ProtonGunDirection = TVector3(0,1,0);
-//    double   ProtonGunEnergy = 2000; // [MeV]
-    
-//    double refractiveIndex = vObj -> GetRefractiveIndex();
-    // scintillator
-    double length = aux->length, width = aux->width, thickness = aux->width;
-    double refractiveIndex = aux->refractiveIndex;
-    double PhotonsPerMeV = aux->PhotonsPerMeV;
-    double PhotonsAbsorbtionLength = aux->AbsorbtionLength;
     
     // proton gun
     TVector3 ProtonGunPosition = aux->pGunPosition;
     TVector3 ProtonGunDirection = aux->pGunDirection;
     double   ProtonGunEnergy = aux->pGunEnergy; // [MeV]
-    
+    PrintTVector3( ProtonGunPosition );
+    PrintTVector3( ProtonGunDirection );
     
     
     // (1) build scintillation bar
-    Bar * bar = new Bar("Scintillation bar", width, thickness, length);
-    bar -> SetRefractiveIndex(refractiveIndex);
-//    double PhotonsPerMeV = vObj -> GetPhotonsPerMeV();
-    bar -> SetPhotonsPerMeV(PhotonsPerMeV);
-//    double PhotonsAbsorbtionLength = vObj -> GetAbsorbtionLength();
-    bar -> SetAbsorbtionLength(PhotonsAbsorbtionLength);
+    Bar * bar = new Bar("Scintillation bar", aux->width, aux->thickness, aux->length);
+    bar -> SetRefractiveIndex(aux->refractiveIndex);
+    bar -> SetPhotonsPerMeV(aux->PhotonsPerMeV);
+    bar -> SetAbsorbtionLength(aux->AbsorbtionLength);
     bar -> SetVerbose(verbose);
     if (verbose>2) { bar->Print(); }
 
@@ -78,7 +62,7 @@ int main(int argc, char **argv){
             
     
     // open output csv files
-    std::string csv_header =    "ArrivedAtFrontFacet,DirectFromProduction,AbsorbedInScintillator,ReadOutByDetector,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLength";
+    std::string csv_header =    "ArrivedAtFrontFacet,DirectFromProduction,AbsorbedInScintillator,ReadOutByDetector,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLength,TimeFromStart,HitFrontFacetPosX,HitFrontFacetPosY,HitFrontFacetPosZ";
     aux -> open_photons_csv(simname , csv_header );
     
     
@@ -93,7 +77,7 @@ int main(int argc, char **argv){
             PrintLine();
         }
         
-        Proton * proton = new Proton (2, verbose );
+        Proton * proton = new Proton (time, verbose );
         proton -> SetShowEveryNPhotons( aux->ShowEveryNPhotons );
         proton -> SetProducePhotons( DoProduceScintillationPhotons );
         proton -> SetDoDrawScene( DoDrawScene );

@@ -4,7 +4,7 @@
     
     <!-- charecteristics -->
     <refractiveIndex> 1.5   </refractiveIndex>
-    <PhotonsPerMeV> 10      </PhotonsPerMeV>
+    <PhotonsPerMeV> 8000    </PhotonsPerMeV>
     <length> 2000           </length>           <!-- mm -->
     <width> 200             </width>            <!-- mm -->
     <thickness> 60          </thickness>        <!-- mm -->
