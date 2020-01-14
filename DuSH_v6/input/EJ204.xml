@@ -1,14 +1,17 @@
 <?xml version='1.0' encoding='utf-8'?>
+<!--Eljen EJ204-->
 
 <Scintillator>
     
     <!-- charecteristics -->
-    <refractiveIndex> 1.5   </refractiveIndex>
-    <PhotonsPerMeV> 8000    </PhotonsPerMeV>    <!-- photon yield in MeVee -->
+    <refractiveIndex> 1.58  </refractiveIndex>
+    <PhotonsPerMeV> 10400   </PhotonsPerMeV>    <!-- photon yield in MeVee -->
     <length> 2000           </length>           <!-- mm -->
     <width> 200             </width>            <!-- mm -->
     <thickness> 60          </thickness>        <!-- mm -->
-    <AbsorbtionLength> 10000</AbsorbtionLength> <!-- mm -->
+    
+    <!--EJ204 light attenuation length is 160 cm-->
+    <AbsorbtionLength> 1600 </AbsorbtionLength> <!-- mm -->
 
 </Scintillator>
 

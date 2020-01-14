@@ -77,7 +77,7 @@ int main(int argc, char **argv){
             PrintLine();
         }
         
-        Proton * proton = new Proton (time, verbose );
+        Proton * proton = new Proton (time, verbose );        
         proton -> SetShowEveryNPhotons( aux->ShowEveryNPhotons );
         proton -> SetProducePhotons( DoProduceScintillationPhotons );
         proton -> SetDoDrawScene( DoDrawScene );

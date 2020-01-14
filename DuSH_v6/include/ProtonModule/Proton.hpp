@@ -41,7 +41,9 @@ private:
     Int_t Nsteps;
     TGraph      *dEdx_vs_KE_proton;
     TSpline3    *dEdx_vs_KE_proton_s3;
-    
+    TGraph      *MeVee_vs_MeV_proton;
+    TSpline3    *MeVee_vs_MeV_proton_s3;
+
     
 public:
     
@@ -50,7 +52,8 @@ public:
     
     // constructors
     Proton(double ftime, Int_t fverbose=0);
-    void GenerateEdepCurves();
+    void            GenerateEdepCurves ();
+    void        GenerateMeV2MeVeeCurve ();
     
     // setters
     void            SetTrajectoryDirec (TVector3 v);

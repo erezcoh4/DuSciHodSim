@@ -12,6 +12,7 @@ TPolyLine3D( 2 ){
     Debug( 1 , Form("Proton::Proton(), verbosity %d",verbose));
     r = new TRandom3(0);
     GenerateEdepCurves();
+    GenerateMeV2MeVeeCurve();
     DoProduceScintillationPhotons = true;
     NScintillationPhotons = 0;
     time = ftime; // time since proton enters scintillator, in [sec]
@@ -60,7 +61,11 @@ void Proton::Shoot( Bar * bar , auxiliary * aux ){
         if ( bar->ContainsPoint(StepPos) ){ // since a certain point the proton enters the scintillator
             
             double Edep_MeV = GetEdep( dx_cm );
-            Int_t Nphotons = (Int_t)(bar -> GetPhotonsPerMeV() * Edep_MeV);
+            // we evaluate the number of scintillation photons produced from photon yield in MeVee,
+            // since these are the units in which the scintillators vendor work.
+            // and so we convert here from MeV to MeVee
+            double photonYield_MeVee = MeVee_vs_MeV_proton_s3 -> Eval( Edep_MeV );
+            Int_t Nphotons = (Int_t)(bar -> GetPhotonsPerMeV() * photonYield_MeVee);
             TickTime( dx_cm , bar -> GetRefractiveIndex() );
             
             if (DoProduceScintillationPhotons){ // flag to suppress this for debugging purposes
@@ -122,6 +127,26 @@ void Proton::TickTime( double dx , double n ){
 }
 
 // ------------------------------------------------------- //
+void Proton::GenerateMeV2MeVeeCurve(){
+    // convert from proton energy deposition in [MeV] to photon yield in [MeVee]
+    // based on [Zhang et al., proceedings isinn-23]
+    // [http://isinn.jinr.ru/proceedings/isinn-23/pdf/Zhang.pdf]
+    
+    Float_t proton_Edep_MeV[15]     = { 0, 0.61, 1.30, 2.09, 2.98, 4.04, 5.29, 6.52, 7.64, 8.92, 10.28, 12.63, 13.99, 15.39, 16.55};
+    Float_t photonYield_MeVee[15]   = { 0, 0.08, 0.26, 0.51, 0.85, 1.33, 1.94, 2.61, 3.26, 3.96, 4.91, 6.41, 7.32, 8.24, 9.05};
+    MeVee_vs_MeV_proton = new TGraph(15, proton_Edep_MeV, photonYield_MeVee);
+        MeVee_vs_MeV_proton_s3 = new TSpline3("Edep [MeV] vs photon yield [MeVee]", MeVee_vs_MeV_proton);
+
+    TCanvas * c = new TCanvas();
+    MeVee_vs_MeV_proton -> Draw();
+    MeVee_vs_MeV_proton_s3 -> Draw();
+    
+    c->SaveAs("/Users/erezcohen/Desktop/proton_MeV_to_MeVee.pdf");
+    c->Close();
+
+}
+
+// ------------------------------------------------------- //
 void Proton::GenerateEdepCurves(){
     // compute dE/dx which is the energy deposition of a proton in scintillator given its energy and dx=step_size
     // step_size is measured in [mm]
@@ -139,7 +164,7 @@ void Proton::GenerateEdepCurves(){
     {2.323E+02,2.667E+02,2.975E+02,3.256E+02,3.516E+02,3.927E+02,4.303E+02,4.648E+02,4.965E+02,5.250E+02,5.510E+02,5.752E+02,6.247E+02,6.663E+02,7.024E+02,7.345E+02,7.629E+02,7.878E+02,8.098E+02,8.293E+02,8.638E+02,8.935E+02,9.184E+02,9.382E+02,9.530E+02,9.635E+02,9.704E+02,9.744E+02,9.758E+02,9.748E+02,9.719E+02,9.674E+02,9.615E+02,9.544E+02,9.073E+02,8.517E+02,7.961E+02,7.441E+02,6.972E+02,6.554E+02,6.185E+02,5.859E+02,5.313E+02,4.876E+02,4.517E+02,4.218E+02,3.963E+02,3.740E+02,3.547E+02,3.375E+02,3.222E+02,3.084E+02,2.959E+02,2.845E+02,2.740E+02,2.643E+02,2.259E+02,1.983E+02,1.772E+02,1.606E+02,1.472E+02,1.360E+02,1.266E+02,1.185E+02,1.053E+02,9.490E+01,8.657E+01,7.969E+01,7.392E+01,6.899E+01,6.473E+01,6.101E+01,5.773E+01,5.482E+01,5.221E+01,4.986E+01,4.773E+01,4.579E+01,3.821E+01,3.294E+01,2.904E+01,2.604E+01,2.171E+01,2.008E+01,1.871E+01,1.651E+01,1.482E+01,1.348E+01,1.239E+01,1.149E+01,1.073E+01,1.007E+01,9.509E+00,9.014E+00,8.577E+00,8.189E+00,7.841E+00,7.528E+00,7.245E+00,6.151E+00,5.407E+00,4.867E+00,4.458E+00,4.138E+00,3.880E+00,3.668E+00,3.491E+00,3.214E+00,3.006E+00,2.846E+00,2.719E+00,2.616E+00,2.532E+00,2.462E+00,2.402E+00,2.350E+00,2.306E+00,2.267E+00,2.234E+00,2.204E+00,2.178E+00,2.033E+00,1.981E+00,1.962E+00,1.959E+00,1.970E+00,1.989E+00,2.010E+00,2.030E+00,2.049E+00,2.067E+00,2.084E+00};
     
     // [https://physics.nist.gov/cgi-bin/Star/compos.pl?refer=ap&matno=216]
-    Float_t ScintillatorDensity = 1.032; //g/cm^3
+    Float_t ScintillatorDensity = 1.023; //g/cm^3, see e.g. Eljen EJ204 or SaintGobain BC408
     
     Float_t dEdx_MeV_Per_cm_proton[132];
     for (int i = 0 ; i < 132; i++) {
@@ -148,12 +173,10 @@ void Proton::GenerateEdepCurves(){
     
     dEdx_vs_KE_proton = new TGraph(132, KE_MeV_proton, dEdx_MeV_Per_cm_proton);
     dEdx_vs_KE_proton_s3 = new TSpline3("KE [MeV]  vs dE/dx [MeV/cm]", dEdx_vs_KE_proton);
-
     
     TCanvas * c = new TCanvas();
     c->SetLogx(); c->SetLogy();
     dEdx_vs_KE_proton_s3 -> Draw();
-    
     c->SaveAs("/Users/erezcohen/Desktop/proton_range.pdf");
     c->Close();
 }

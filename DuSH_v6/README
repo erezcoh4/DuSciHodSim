@@ -9,6 +9,8 @@ Changes from v5:
 3) change main input: 
 > ./RunProgram <configuration> <verbosity> 
 
+4)Evaluate the number of scintillation photons produced from photon yield in MeVee, since these are the units in which the scintillators vendor work. So now also convert from MeV to MeVee.
+
 
 
 
