@@ -1,0 +1,79 @@
+
+v7 Jan-14, 2020
+Changes from v6:
+------------------
+1) Add waveguide for photons coupled to facet
+
+
+v6 Jan-04, 2020
+Changes from v5:
+------------------
+1) input from xml file
+
+2) define detector surface area to provide dynamic information on "photon detected by detector"
+
+3) change main input: 
+> ./RunProgram <configuration> <verbosity> 
+
+4)Evaluate the number of scintillation photons produced from photon yield in MeVee, since these are the units in which the scintillators vendor work. So now also convert from MeV to MeVee.
+
+
+
+
+v5 Dec-20, 2019
+Changes from v4:
+------------------
+1) Added proton emission and propagation towards detector
+	(A) added ProtonModule and a Proton class
+	(B) proton emits scintillation photons
+
+
+2) Removed FaceModule
+
+3) Added "auxiliary" class and moved some of the functionality previously derived by "version" class
+
+4) photon absorbed (or not) in paddle following "radiation-length" decay
+
+
+v4 Dec-18, 2019
+Changes from v3:
+------------------
+1) Added output to CSV:
+First stage writing photon propagation properties
+	(A) arrived to front facet (boolean)
+	(B) emission direction (x,y,z)
+Output data will be written to 
+	/Users/erezcohen/Desktop/data/DuSiHodSim/output/csv_files/
+
+2) Added argument inputs to software
+	verbose = atoi(argv[1]);  // verbosity
+	Nphotons = atoi(argv[2]); // number of photons to generate
+	refractiveIndex = atof(argv[3]); // scintillator refractive index
+
+3) added first analysis macro to /mac/ as a Jupyter notebook that plots trapping efficiency
+	
+	
+
+
+v3 Dec-6, 2019
+Changes from v2:
+------------------
+1) Added a photon as TPolyLine3D
+
+
+
+
+v2 Dec-2, 2019
+Changes from v1:
+------------------
+1) compiled with ROOT cern libraries using 
+	LDFLAGS += -L$(shell root-config --libdir) -lEG -lSpectrum -lHist
+
+2) added version.hpp
+
+
+------------------------------------------------------------------------
+"OpenDuSi": open src/*/*.cpp src/*.cpp include/*/*.hpp Makefile -a xcode
+"LinkDuSi": ln -s build/apps/program RunProgram
+
+
