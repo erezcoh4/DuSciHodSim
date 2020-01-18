@@ -39,8 +39,10 @@ void Proton::DrawTrajectory(int trajColor){
 
 
 // ------------------------------------------------------- //
-void Proton::Shoot( Bar * bar , auxiliary * aux ){
+void Proton::Shoot( Bar * bar , auxiliary * aux , bool fdebugMode, Waveguide * waveguide){
     Debug(2, "Proton::Shoot()");
+    debugMode = fdebugMode;
+    if (debugMode) Debug(0, "working in debug mode");
     // proton will be fired from ProductionPosition at ProductionDirection
     // if the proton will cross the scintillation bar
     // (which is supppose to be the case every time and can be easily verified using geometrical calculations, then operate Proton::PropagateInPaddle(),
@@ -53,13 +55,15 @@ void Proton::Shoot( Bar * bar , auxiliary * aux ){
     EndPosition = ProductionPosition + 500 * ProductionDirection;
 
     bool ProtonWasInScintillator = false;
-    double dx_cm = 0.1; // [mm]
+    bool InScintillator = false;
+    double dx_cm = 0.5; // the step length, measured in [cm]
     for (int stepIdx=0; stepIdx<MAXPROTONSTEPS ; stepIdx++){
         // step through proton propagation until
         // it either exists the scintillator or the number of steps exceeds MAXPROTONSTEPS
         TVector3 StepPos = ProductionPosition + ProductionDirection * (0.5 * (dx_cm*10) * (2*stepIdx-1));
+                        
         if ( bar->ContainsPoint(StepPos) ){ // since a certain point the proton enters the scintillator
-            
+            InScintillator = true;
             double Edep_MeV = GetEdep( dx_cm );
             // we evaluate the number of scintillation photons produced from photon yield in MeVee,
             // since these are the units in which the scintillators vendor work.
@@ -68,8 +72,11 @@ void Proton::Shoot( Bar * bar , auxiliary * aux ){
             Int_t Nphotons = (Int_t)(bar -> GetPhotonsPerMeV() * photonYield_MeVee);
             TickTime( dx_cm , bar -> GetRefractiveIndex() );
             
+            Debug( 1, Form("photonYield MeVee: %.3f MeVee, out of %.2f produced %d photons",
+                           photonYield_MeVee,bar -> GetPhotonsPerMeV() * photonYield_MeVee,Nphotons) );
+            
             if (DoProduceScintillationPhotons){ // flag to suppress this for debugging purposes
-                ProduceScintillationPhotons( bar, aux, Nphotons );
+                ProduceScintillationPhotons( bar, aux, Nphotons, StepPos , waveguide );
             }
             
             // of course, when the proton produced scintillation photons it looses some energy...
@@ -77,11 +84,17 @@ void Proton::Shoot( Bar * bar , auxiliary * aux ){
             // and at least one time we want to flag that the proton entered the scintillator
             ProtonWasInScintillator = true;
             
-            Debug(2, Form("proton gave %.2f MeV (Ep=%.2f MeV), producing %d scintillation photons",Edep_MeV,Ep,Nphotons));
+            if (debugMode){
+                // if in debug mode produce only one photon, once.
+                // so stop producing scintillation photons...
+                DoProduceScintillationPhotons = false;
+            }
             
+            Debug(2, Form("proton gave %.2f MeV (Ep=%.2f MeV), producing %d scintillation photons",Edep_MeV,Ep,Nphotons));
         } else {
+            InScintillator = false;
             // at some point the proton trajectory will exit the scintillator
-             // in this case, if the proton was already in the scintillator, we stop monitoring the proton behaviour
+            // in this case, if the proton was already in the scintillator, we stop monitoring the proton behaviour
             Debug(2, Form("paddle does not contain step %d at (%.1f,%.1f,%.1f)",stepIdx,StepPos.X(),StepPos.Y(),StepPos.Z()));
             if (ProtonWasInScintillator){
                 // proton exit scintillator
@@ -93,7 +106,11 @@ void Proton::Shoot( Bar * bar , auxiliary * aux ){
         Debug(2, Form("proton propagating stepIdx %d at (%.1f,%.1f,%.1f)",stepIdx,StepPos.X(),StepPos.Y(),StepPos.Z()));
         
         if (stepIdx%10==0) {
-            Debug(-1, Form("proton propagating stepIdx %d at (%.1f,%.1f,%.1f)",stepIdx,StepPos.X(),StepPos.Y(),StepPos.Z()));
+            if (InScintillator){
+                Debug(-1, Form("proton propagating in scintillator stepIdx %d at (%.1f,%.1f,%.1f)",stepIdx,StepPos.X(),StepPos.Y(),StepPos.Z()));
+            } else {
+                Debug(-1, Form("proton propagating outside scitillator stepIdx %d at (%.1f,%.1f,%.1f)",stepIdx,StepPos.X(),StepPos.Y(),StepPos.Z()));
+            }
         }
     }
     Debug(-1, Form("done stepping through proton propagation, produced %d scintillation photons in paddle", GetNScintillationPhotons()));
@@ -123,27 +140,52 @@ void Proton::TickTime( double dx , double n ){
     
     // and update the time since the proton entered the scintillator
     time += dt;
-    Debug(1 ,Form("Ep=%.1f, v=%.1f, dx=%.1f, dt=%.1f, t=%.1f",Ep,v,dx,dt,time));
+    Debug(1 ,Form("Ep=%.1f MeV, beta=%.1f, dx=%.1f cm, dt=%.1f sec., t=%.1f sec.",Ep,beta,dx,dt,time));
 }
 
 // ------------------------------------------------------- //
 void Proton::GenerateMeV2MeVeeCurve(){
     // convert from proton energy deposition in [MeV] to photon yield in [MeVee]
+    
+    TCanvas * c = new TCanvas();
+    
+    // first method:
     // based on [Zhang et al., proceedings isinn-23]
     // [http://isinn.jinr.ru/proceedings/isinn-23/pdf/Zhang.pdf]
     
     Float_t proton_Edep_MeV[15]     = { 0, 0.61, 1.30, 2.09, 2.98, 4.04, 5.29, 6.52, 7.64, 8.92, 10.28, 12.63, 13.99, 15.39, 16.55};
     Float_t photonYield_MeVee[15]   = { 0, 0.08, 0.26, 0.51, 0.85, 1.33, 1.94, 2.61, 3.26, 3.96, 4.91, 6.41, 7.32, 8.24, 9.05};
-    MeVee_vs_MeV_proton = new TGraph(15, proton_Edep_MeV, photonYield_MeVee);
-        MeVee_vs_MeV_proton_s3 = new TSpline3("Edep [MeV] vs photon yield [MeVee]", MeVee_vs_MeV_proton);
-
-    TCanvas * c = new TCanvas();
-    MeVee_vs_MeV_proton -> Draw();
-    MeVee_vs_MeV_proton_s3 -> Draw();
+    //    MeVee_vs_MeV_proton = new TGraph(15, proton_Edep_MeV, photonYield_MeVee);
+    //    MeVee_vs_MeV_proton_s3 = new TSpline3("Edep [MeV] vs photon yield [MeVee]", MeVee_vs_MeV_proton);
+    //
+    //    MeVee_vs_MeV_proton -> Draw();
+    //    MeVee_vs_MeV_proton_s3 -> Draw();
     
+    // second method:
+    // based on BAND studies
+    
+    // from Axel:
+    // *********** These are parameters from a paper
+    //double a1 = 0.95;
+    //double a2 = 8.0;
+    //double a3 = 0.1;
+    //double a4 = 0.9;
+    // *********** These are parameters from Or
+    double a1 = 0.83;
+    double a2 = 2.82;
+    double a3 = 0.25;
+    double a4 = 0.93;
+
+    for (int i=0; i<15; i++){
+         photonYield_MeVee[i]= (a1*proton_Edep_MeV[i]) - a2*(1.0 - exp(-a3*pow(proton_Edep_MeV[i], a4)));
+    }
+    MeVee_vs_MeV_proton = new TGraph(15, proton_Edep_MeV, photonYield_MeVee);
+    MeVee_vs_MeV_proton_s3 = new TSpline3("Edep [MeV] vs photon yield [MeVee]", MeVee_vs_MeV_proton);
+    MeVee_vs_MeV_proton -> Draw("o");
+    MeVee_vs_MeV_proton_s3 -> Draw("same");
+
     c->SaveAs("/Users/erezcohen/Desktop/proton_MeV_to_MeVee.pdf");
     c->Close();
-
 }
 
 // ------------------------------------------------------- //
@@ -204,8 +246,12 @@ void Proton::SetEnergyMomentum(){
 }
 
 // ------------------------------------------------------- //
-void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphotons ){
+void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphotons, TVector3 EmissionPos , Waveguide * waveguide ){
     Debug(2 , "Proton::ProduceScintillationPhotons()");
+    
+    if (debugMode){
+        Nphotons = 1;
+    }
     
     // produce scintillation photons in paddle and propagate them
     for (int photonIdx=1; photonIdx <= Nphotons; photonIdx++ ) {
@@ -216,15 +262,20 @@ void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphoto
             PrintLine();
         }
         
-        Photon * photon = new Photon (2, verbose);
-        photon -> SetProductionPosition( TVector3(0,0,0) );
-        photon -> EmitIsotropically( time );
+        Photon * photon = new Photon (0, verbose);
+        photon -> SetProductionPosition( EmissionPos );
+        photon -> EmitIsotropically( time , bar );
         photon -> PropagateInPaddle( bar );
         
+        // if the photon reached front facet, move to waveguide...
+        if (photon->GetArrivedAtFrontFacet()){
+            photon->PropagateInWaveguide( waveguide );
+        }
+        
+        // write photon story into output csv
         // when adding values here, also add the corresponding header label at
         // program.cpp
         // in "open output csv files" (around line 59)
-        // CONTINUE HERE: Need to write the csv
         aux->write_photons_csv( {
             (double)photon->GetArrivedAtFrontFacet(),
             (double)photon->GetDirectFromProduction(),            
@@ -241,7 +292,11 @@ void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphoto
         } );
                 
         
-        if (DoDrawScene && (NScintillationPhotons % ShowEveryNPhotons == 0)) { photon -> Draw(); } // draw every 1000th photon
+        if (DoDrawScene && (NScintillationPhotons % ShowEveryNPhotons == 0)) {
+            // draw every Nth photon
+            photon -> PrintPath();
+            photon -> Draw();
+        }
         
         if (verbose>1){
             std::cout << "done photon " << photonIdx << std::endl;

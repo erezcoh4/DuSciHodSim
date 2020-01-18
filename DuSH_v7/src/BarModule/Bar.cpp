@@ -10,27 +10,33 @@ TGeoBBox( name, dx/2, dy/2, dz/2, origin ){
     length = dz;
     width = dx;
     thickness = dy;
+    center = TVector3(origin[0],origin[1],origin[2]);
     defineFacets();
 }
 
 // ------------------------------------------------------- //
 void Bar::defineFacets(){
     
-  facetNames = {
-       "Top",  "Bottom" ,
-       "Left", "Right" ,
-       "Back", "Front"};
-   
-   facetCenters = {
-       TVector3(0,thickness/2,0),   TVector3(0,-thickness/2,0),
-       TVector3(width/2,0,0),       TVector3(-width/2,0,0),
-       TVector3(0,0,-length/2),     TVector3(0,0,length/2)};
-   
-   facetNormals = {
-       TVector3(0,1,0),    TVector3(0,-1,0),
-       TVector3(1,0,0),    TVector3(-1,0,0),
-       TVector3(0,0,-1),    TVector3(0,0,1)
-   };
+    facetNames = {
+        "Top",  "Bottom" ,
+        "Left", "Right" ,
+        "Back", "Front"};
+    
+    facetCenters = {
+        TVector3(0,thickness/2,0) + center,   TVector3(0,-thickness/2,0) + center,
+        TVector3(width/2,0,0) + center,       TVector3(-width/2,0,0) + center,
+        TVector3(0,0,-length/2) + center,     TVector3(0,0,length/2) + center};
+    
+    facetNormals = {
+        TVector3(0,1,0),    TVector3(0,-1,0),
+        TVector3(1,0,0),    TVector3(-1,0,0),
+        TVector3(0,0,-1),    TVector3(0,0,1)
+    };
+    
+    Debug(-1, "Bar::defineFacets()");
+    for (auto facetCenter : facetCenters){
+        PrintTVector3( facetCenter );
+    }
 }
 
 // ------------------------------------------------------- //
@@ -43,8 +49,8 @@ void Bar::SetTotalInternalReflectionAngle(){
 
 // ------------------------------------------------------- //
 bool Bar::ContainsPoint(const TVector3 position) {
-    if (TMath::Abs(position.X()) > width/2.)    return false;
-    if (TMath::Abs(position.Y()) > thickness/2.)return false;
-    if (TMath::Abs(position.Z()) > length/2.)   return false;
+    if (TMath::Abs(position.X() - center.X()) > width/2.)    return false;
+    if (TMath::Abs(position.Y() - center.Y()) > thickness/2.)return false;
+    if (TMath::Abs(position.Z() - center.Z()) > length/2.)   return false;
     return true;
 }

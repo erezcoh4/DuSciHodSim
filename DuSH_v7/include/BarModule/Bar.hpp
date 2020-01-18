@@ -14,16 +14,18 @@ class Bar: public TGeoBBox
 {
 private:
     
-    //    // dimensions [mm]
-    //    double length, width, thickness;
+    
+    
     Int_t   verbose;
     // position [mm]
     TVector3 center;
-    //    Face    face_top, face_bottom, face_left, face_right, face_front, face_back;
     
+    // dimensions [mm]
     double length, width, thickness;
+    // refractive index
     double refractiveIndex;
-    double TotalInternalReflectionAngle;
+    double TotalInternalReflectionAngle; // [rad.]
+    // scintillation
     double PhotonsPerMeV;
     double PhotonAbsorbtionLength;
     
@@ -51,6 +53,7 @@ public:
     double GetTotalInternalReflectionAngle () {return TotalInternalReflectionAngle;}
     double                GetPhotonsPerMeV () {return PhotonsPerMeV;}
     double             GetAbsorbtionLength () {return PhotonAbsorbtionLength;};
+    TVector3                     GetCenter () {return center;};
     // geometry
     void                      defineFacets ();
     bool                     ContainsPoint (const TVector3 position);

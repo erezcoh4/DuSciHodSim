@@ -2,7 +2,7 @@
 #define VERSION_HPP
 // ---------------------------------
 // version number
-#define vNumber 6.0
+#define vNumber 7.0
 // ---------------------------------
 
 #include <iostream>

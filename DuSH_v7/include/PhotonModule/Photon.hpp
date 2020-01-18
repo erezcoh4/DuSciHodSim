@@ -14,6 +14,7 @@
 #include "TPolyLine3D.h"
 #include "TRandom3.h"
 #include <BarModule/Bar.hpp>
+#include <WaveguideModule/Waveguide.hpp>
 #include "Auxiliary/version.hpp"
 #include "Auxiliary/auxiliary.hpp"
 
@@ -26,10 +27,15 @@ private:
     auxiliary   aux;
     
     bool        photonInBar; // is the photon inside a scintillation bar?
-    bool        photonArrivedAtFrontFacet; // can the photon be read out by SiPM?
+    bool        photonInWaveguide; // is the photon inside the waveguide?
+    
+    bool        photonArrivedAtFrontFacet; // can the photon be read out by SiPM if they're coupled with no waveguide?
+    bool        photonArrivedAtWaveguideExit; // can the photon be read out by SiPM?
+    
     bool        photonAbsorbedInScintillator; // statistically, following 'absorbtion length' decay
     bool        photonReadOutByDetector; // statistically, following 'absorbtion length' decay
     bool        photonDirectFromProduction; // has the photon hit any facet, or got to the end directly from production?
+    
     
     Int_t       Npoints, verbose;
     
@@ -45,6 +51,8 @@ private:
     
     TRandom3 * r;
     Double_t x, y, z;
+    
+    std::vector<TVector3> PathPoints;
     
     bool        PhotonGoingForward, PhotonGoingBackward, PhotonGoingLeft, PhotonGoingRight, PhotonGoingUp, PhotonGoingDown;
     
@@ -88,19 +96,27 @@ public:
     // propagation
     bool        PhotonTrajOppositeFacet (std::string facetName);
     double  GetTrajectoryAngleWithPlane (Bar * bar, int facetIdx);
-    void              EmitIsotropically (double fProductionTime);
+    void              EmitIsotropically (double fProductionTime, Bar * bar );
     void              PropagateInPaddle (Bar * bar);
     void                  ApplySnellLaw (Bar * bar, int facetIdx);
     void           ApplySnellDivergence (TVector3 PlaneNormal,  double n_in);
     void DecideIfAbsorbedInScintillator ( double AbsorbtionLength );
     void      DecideIfReadOutByDetector ();
     void             ArriveAtFrontFacet (); // what happens when a photon arrives at the front facet
+    void           PropagateInWaveguide (Waveguide * waveguide);
+    void          ArriveAtWaveguideExit ();
+    
     
     // print and draw
-    void          PrintTrajectory ();
+    void          PrintTrajectory (std::string name="");
+    void                PrintPath (std::string name="");
     void           DrawTrajectory ();
     void                    Debug (Int_t verobosity_level, std::string text)
-    { if ( verbose > verobosity_level ) std::cout << text << std::endl; };
+    {
+        if ( verbose > verobosity_level+2 ) {std::cout <<  "\x1B[35m" << text << "\x1B[0m" << std::endl; return;}
+        if ( verbose > verobosity_level+1 ) {std::cout <<  "\x1B[34m" << text << "\x1B[0m" << std::endl; return;}
+        if ( verbose > verobosity_level )   {std::cout <<  "\x1B[33m" << text << "\x1B[0m" << std::endl; return;}
+    };
 };
 
 #endif

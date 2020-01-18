@@ -31,8 +31,11 @@ public:
     // scintillator
     double      refractiveIndex;
     double      length, width, thickness; // [mm]
-    double      WaveguideWidth, WaveguideLength; // [mm]
     double      PhotonsPerMeV, AbsorbtionLength;
+
+    // waveguide
+    double      WaveguideWidth, WaveguideLength, WaveguideAbsorbtionLength; // [mm]
+    double      WaveguideRefractiveIndex;
     
     // proton gun
     double      pGunEnergy;
@@ -170,6 +173,8 @@ public:
         // waveguide
         WaveguideWidth = 2 * 10 * 2.54; // [mm] since its 2''
         WaveguideLength = 100; // [mm]
+        WaveguideAbsorbtionLength = 1600; // [mm]
+        WaveguideRefractiveIndex = 1.5;
         XMLNodePointer_t WaveguideNode = xml.GetNext(DisplayNode);
         std::cout << xml.GetNodeName(WaveguideNode) << std::endl;
         child = xml.GetChild(WaveguideNode);
@@ -185,6 +190,16 @@ public:
             else if ( strcmp(xml.GetNodeName(child),"WaveguideLength") == 0) {
                 
                 WaveguideLength = std::stod(xml.GetNodeContent(child));
+                
+            }
+            else if ( strcmp(xml.GetNodeName(child),"WaveguideAbsorbtionLength") == 0) {
+                
+                WaveguideAbsorbtionLength = std::stod(xml.GetNodeContent(child));
+                
+            }
+            else if ( strcmp(xml.GetNodeName(child),"WaveguideRefractiveIndex") == 0) {
+                
+                WaveguideRefractiveIndex = std::stod(xml.GetNodeContent(child));
                 
             }
             child = xml.GetNext(child);

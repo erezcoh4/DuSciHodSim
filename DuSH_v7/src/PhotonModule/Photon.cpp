@@ -15,7 +15,8 @@ TPolyLine3D( n ){
         std::cout << "photon verbosity: " << verbose << std::endl;
     }
     r = new TRandom3(0);
-    SetInBar(1);
+    SetOutsideBar(); // lets start with not forcing it inside the scintillator and then put it inside when its emitted
+    
     photonArrivedAtFrontFacet = false;
     photonAbsorbedInScintillator = false;
     photonReadOutByDetector = false;
@@ -69,10 +70,10 @@ TVector3 Photon::TrajIntWithPlane(
 
 
 // ------------------------------------------------------- //
-void Photon::PrintTrajectory(){
-    std::cout << "photon trajectory: ";
-    PrintTVector3(trajectoryStart);
-    PrintTVector3(trajectoryDirec);
+void Photon::PrintTrajectory(std::string name){
+    std::cout << "photon trajectory: " << std::endl;
+    std::cout << name << " "; PrintTVector3(trajectoryStart);
+    std::cout << name << " "; PrintTVector3(trajectoryDirec);
     TVector3 trajEnd = trajectoryStart + 500 * trajectoryDirec;
     PrintTVector3(trajEnd);
     Debug(2,Form("Total path length: %.1f mm",TotalPathLength));
@@ -80,22 +81,35 @@ void Photon::PrintTrajectory(){
 
 // ------------------------------------------------------- //
 void Photon::DrawTrajectory(){
+    PrintTrajectory("final (draw)");
     TVector3 trajEnd = trajectoryStart + 500 * trajectoryDirec;
-    this -> SetPoint(Npoints,trajEnd.X(),trajEnd.Y(),trajEnd.Z());
+    // this -> SetPoint(Npoints,trajEnd.X(),trajEnd.Y(),trajEnd.Z());
 }
 // ------------------------------------------------------- //
-void Photon::EmitIsotropically(double fProductionTime){
+void Photon::EmitIsotropically(double fProductionTime, Bar * bar){
     Debug(1,"Photon::EmitIsotropically()");
     // emit photon isotropically from emissionPos:
     // generate a photon direction on the unit sphere
+    
+    // production position
     photonStartPosition = ProductionPosition;
-    this -> SetPoint(1,photonStartPosition.X(),photonStartPosition.Y(),photonStartPosition.Z());
+    Npoints = 1;
+    this -> SetPoint(Npoints-1,photonStartPosition.X(),photonStartPosition.Y(),photonStartPosition.Z());
+    PathPoints.push_back( photonStartPosition );
+    if (bar->ContainsPoint (photonStartPosition) ){
+        SetInBar( bar->GetRefractiveIndex() ) ;
+    } else {
+        SetOutsideBar();
+    }
+    
+    // prodiction direction
     r -> Sphere(x, y, z, 1);
     photonDirection = TVector3( x, y, z );
     SetProductionDirection( photonDirection );
     photonEndPosition = photonStartPosition + 5000 * photonDirection;
     photonDirectFromProduction = true;
-    // time
+    
+    // production time
     ProductionTime = fProductionTime;
     ExitTime = 0;
 }
@@ -131,22 +145,26 @@ void Photon::PropagateInPaddle( Bar * bar ){
     while (photonInBar && (Npoints < MAXPHOTONSTEPS)) { // stop if number of points it too large
         this -> SetTrajectoryDirec( photonDirection );
         this -> SetTrajectoryStart( photonStartPosition );
-        if (verbose>2){ PrintTrajectory(); }
+        if (verbose>2){ Debug(1,"photon In Bar"); PrintTrajectory("expected"); }
         
         // (3.2) Decide if the paddle bounding box could be crossed by a vector.
         // intersect with paddle facets determines photon end position...
         bool foundIntersectionPoint = false;
         for (int facetIdx=0; facetIdx<6; facetIdx++){
-            Debug(2 , Form("LastHitFacetIdx: %d, facetIdx: %d", LastHitFacetIdx , facetIdx) );
+            
+            if (foundIntersectionPoint) continue;
+            std::string fName = bar->facetNames.at(facetIdx).c_str();
+            
+            Debug(2 , Form("looking for intersection at *%s* (LastHitFacetIdx %d)", fName.c_str() ,LastHitFacetIdx) );
             
             // avoid from intersecting trajectory with wrong facet - a one which is opposite to photon direction
-            if (PhotonTrajOppositeFacet( bar->facetNames.at(facetIdx) )){
-                Debug(5, "Photon Trajory Opposite Facet" );
+            if (PhotonTrajOppositeFacet( fName )){
+                Debug(2, "Photon Trajory Opposite Facet, continuing to next facet \n" );
                 continue;
             }
             
-            if (foundIntersectionPoint==false && facetIdx!=LastHitFacetIdx ){
-                Debug(3, "Haven't found plane intersection");
+            if (facetIdx!=LastHitFacetIdx ){
+                Debug(3, "Yet haven't found, and looking for plane intersection: ");
                 
                 TVector3 FacetIntersection =
                 this -> TrajIntWithPlane ( bar->facetCenters.at(facetIdx), bar->facetNormals.at(facetIdx) );
@@ -154,14 +172,13 @@ void Photon::PropagateInPaddle( Bar * bar ){
                 if (verbose>3) {PrintTVector3(FacetIntersection);}
                 
                 if (FacetIntersection.x()!=FacetIntersection.y() && FacetIntersection.x()!=FacetIntersection.z()){
+                                        
                     
-                    //                    if (verbose>3) { PrintTVector3(bar->facetCenters.at(facetIdx)); }
-                    
-                    if (    abs(FacetIntersection.x()) <= bar -> GetWidth()/2
-                        &&  abs(FacetIntersection.y()) <= bar -> GetThickness()/2
-                        &&  abs(FacetIntersection.z()) <= bar -> GetLength()/2 ){
+                    if (    abs(FacetIntersection.x() - bar->GetCenter().x()) <= bar -> GetWidth()/2     + 0.1
+                        &&  abs(FacetIntersection.y() - bar->GetCenter().y()) <= bar -> GetThickness()/2 + 0.1
+                        &&  abs(FacetIntersection.z() - bar->GetCenter().z()) <= bar -> GetLength()/2    + 0.1){
                         
-                        Debug(4, "photon met scintillator facet! now apply snell law");
+                        Debug(4, "photon met scintillator facet. apply snell law");
                         
                         // if the photon hit any facet on its way (except the front facet)
                         // it is no longer a "direct photon" that was emitted from the proton directly
@@ -181,17 +198,37 @@ void Photon::PropagateInPaddle( Bar * bar ){
                         this -> ApplySnellLaw( bar, facetIdx );
                     }
                     else {
+                        if (verbose > 4){
+                            std::cout
+                            << "abs(FacetIntersection.x() - bar->GetCenter().x()): "
+                            << abs(FacetIntersection.x() - bar->GetCenter().x())
+                            << ", bar -> GetWidth()/2: "
+                            << bar -> GetWidth()/2 << std::endl
+                            << ", abs(FacetIntersection.y() - bar->GetCenter().y()):"
+                            <<  abs(FacetIntersection.y() - bar->GetCenter().y())
+                            << ", bar -> GetThickness()/2:"
+                            << bar -> GetThickness()/2 << std::endl
+                            << ", abs(FacetIntersection.z() - bar->GetCenter().z()): "
+                            <<  abs(FacetIntersection.z() - bar->GetCenter().z())
+                            << ", bar -> GetLength()/2:"
+                            << bar -> GetLength()/2 << std::endl;
+                        }
                         Debug(4, "intersection point of photon with plane plane not on facet" );
                     }
                 }
                 if (verbose>2){
-                    std::cout << "done stepping through facet " << facetIdx << std::endl;
+                    std::cout << "done stepping through *" << fName << "* facet" << std::endl;
                     PrintEmptyLine();
                 }
             }
         }
         TotalPathLength += (photonEndPosition - photonStartPosition).Mag();
-        this -> SetPoint(Npoints,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
+        
+        // add step point
+        Npoints++;
+        this -> SetPoint(Npoints-1,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
+        PathPoints.push_back( photonEndPosition );
+        
         photonStartPosition = photonEndPosition;
                 
         if (verbose>2) {
@@ -199,16 +236,21 @@ void Photon::PropagateInPaddle( Bar * bar ){
             Debug(2, Form("Number of photon steps: %d , photonInBar: %d", Npoints-1, photonInBar) );
             PrintLine();
         }
-        Npoints = Npoints + 1;
+        
     }
     
     if (!photonInBar){ // photon emerged from paddle
         SetTrajectoryStart( photonEndPosition );
         SetTrajectoryDirec( photonDirection );
+        photonEndPosition = photonEndPosition + 500 * photonDirection;
+        // add step point
+        Npoints++;
+        this -> SetPoint(Npoints-1,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
+        PathPoints.push_back( photonEndPosition );
         
         if (verbose>3){
-            DrawTrajectory();
-            PrintTrajectory();
+            // DrawTrajectory();
+            PrintTrajectory("outside scintillator");
             Debug(3,"photon exitted from paddle!");
             PrintLine();
         }
@@ -262,8 +304,8 @@ double Photon::GetTrajectoryAngleWithPlane(Bar * bar, int facetIdx) {
     
     double phi = TMath::Pi()/2. - asin((fabs(n.Dot(v)) / (n.Mag() * v.Mag())));
     
-    Debug(4,bar->facetNames.at(facetIdx));
-    Debug(3, Form("n.Dot(v): %.2f, |n|: %.1f, |n|: %.1f, phi: %.2f",n.Dot(v),n.Mag(),v.Mag(),phi));
+    Debug(4, Form("Photon::GetTrajectoryAngleWithPlane(%s)",bar->facetNames.at(facetIdx).c_str()));
+    Debug(3, Form("n.Dot(v): %.2f, |n|: %.1f, |v|: %.1f, phi: %.2f",n.Dot(v),n.Mag(),v.Mag(),phi));
     return phi;
 }
 
@@ -283,12 +325,13 @@ void Photon::ArriveAtFrontFacet(){
     // it emerged out of the paddle
     photonInBar = false;
     photonArrivedAtFrontFacet = true;
-    DecideIfReadOutByDetector();
+    
     HitFrontFacetPos = photonEndPosition;
     this -> SetLineColor( 4 ); // change the color of the photons that arrived at the front facet to blue
     if (photonDirectFromProduction){
         this -> SetLineColor( 3 ); // change the color to green if its a direct photon....
     }
+    
 }
 
 // ------------------------------------------------------- //
@@ -300,8 +343,7 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     // or it will stay in the paddle if the angle is greater than the critical angle,
     // and the trajectory direction will be flipped
     
-    Debug(2 , "Photon::ApplySnellLaw()");
-    Debug(3 , bar->facetNames.at(facetIdx));
+    Debug(2 , Form("Photon::ApplySnellLaw(%s)",bar->facetNames.at(facetIdx).c_str()));
     
     // if photon touched the front facet of the scintillation bar
     // and intersected with its plane,
@@ -319,8 +361,12 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
     
     
     if ( photonTrajectoryAngleWithPlane > bar->GetTotalInternalReflectionAngle() ){ // total internal reflection
+    
+        Debug(3 , Form("angle %.1f deg. > TIR = %.1f deg., so reflected!",
+                       aux.rad2deg(photonTrajectoryAngleWithPlane), aux.rad2deg(bar->GetTotalInternalReflectionAngle())));
         
-        double shiftFromFacet = 0.1; // [mm]
+        
+        double shiftFromFacet = 0.01; // [mm]
         if (bar->facetNames.at(facetIdx) == "Top" || bar->facetNames.at(facetIdx) == "Bottom"){
             photonDirection.SetY( -photonDirection.y() );
             
@@ -345,9 +391,12 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
         }
     }
     else { // photon exit scintillation bar
+        
+        Debug(3 , Form("angle %.1f deg. < TIR = %.1f deg., so exit scintillation bar!",
+                       aux.rad2deg(photonTrajectoryAngleWithPlane), aux.rad2deg(bar->GetTotalInternalReflectionAngle())));
+        
         this -> ApplySnellDivergence( bar -> facetNormals.at(facetIdx) , bar -> GetRefractiveIndex() );
         photonInBar = false;
-        Debug(4, "photon exit scintillation bar angle < TIR" );
         return;
     }
     
@@ -357,17 +406,23 @@ void Photon::ApplySnellLaw(Bar * bar, int facetIdx){
 void Photon::ApplySnellDivergence( TVector3 PlaneNormal, double n_in ){
     // change photon direction according to Snell' Law
     // [http://www.starkeffects.com/snells-law-vector.shtml]
-    // v_out = (n_in/n_out) (n x (v_in x n)) - n * sqrt( 1 - (n_in/n_out)^2 |v_in x n|^2)
+    // v_out = (n_in/n_out) (n x (-n x v_in)) - n * sqrt( 1 - (n_in/n_out)^2 |v_in x n|^2)
     
     // CONTINUE HERE: Apply Snell' beam direction change and check it...
     
     double n_out = 1; // air
     double n_ratio = n_in / n_out;
     TVector3 v_in = trajectoryDirec; // vector in bar
-    TVector3 CrossProduct = v_in.Cross( PlaneNormal );
+    TVector3 CrossProduct = PlaneNormal.Cross( v_in );
     
-    TVector3 v_out =    n_ratio*( PlaneNormal.Cross(CrossProduct) )
-    - PlaneNormal * sqrt(1 - n_ratio*n_ratio*CrossProduct.Mag2());
+    TVector3 v_out =  n_ratio*( PlaneNormal.Cross( - CrossProduct ) )
+                      - PlaneNormal * sqrt(1 - n_ratio*n_ratio*CrossProduct.Mag2());
+    
+    photonDirection = v_out;
+    trajectoryDirec = photonDirection;
+
+    Debug(4, Form("direction in scintillator (%.1f,%.1f,%.1f), outside scintillator (%.1f,%.1f,%.1f)",
+                  v_in.x(),v_in.y(),v_in.z(),v_out.x(),v_out.y(),v_out.z()) );
 }
 
 
@@ -378,4 +433,32 @@ double Photon::GetTimeFromStart () {
     //
     ExitTime = ProductionTime + TotalPathLength / v_mm_sec;
     return ExitTime;
+}
+
+
+
+// ------------------------------------------------------- //
+void Photon::PrintPath (std::string name){
+    Debug(2,Form("Photon::PrintPath(%s)",name.c_str()));
+    for (auto PathPoint : PathPoints){
+        PrintTVector3(PathPoint);
+    }
+}
+
+
+
+// ------------------------------------------------------- //
+void Photon::ArriveAtWaveguideExit(){
+    // move to waveguide
+    photonInWaveguide = true;
+    photonArrivedAtWaveguideExit = false;
+    
+    // detector - move this to hitting front facet of waveguide
+    DecideIfReadOutByDetector();
+}
+
+// ------------------------------------------------------- //
+void Photon::PropagateInWaveguide( Waveguide * waveguide ){
+    // CONTINUE HERE: Propagate in waveguide.
+    std::cout << waveguide -> GetRefractiveIndex() << std::endl;
 }

@@ -33,3 +33,13 @@
     <ShowEveryNPhotons> 1000 </ShowEveryNPhotons>
 
 </Display>
+
+
+<Waveguide>
+    
+    <WaveguideWidth>    50.8            </WaveguideWidth>   <!-- mm -->
+    <WaveguideLength>   100             </WaveguideLength>  <!-- mm -->
+    <WaveguideAbsorbtionLength>   1000  </WaveguideAbsorbtionLength>  <!-- mm -->
+    <WaveguideRefractiveIndex>   1.5    </WaveguideRefractiveIndex>
+    
+</Waveguide>

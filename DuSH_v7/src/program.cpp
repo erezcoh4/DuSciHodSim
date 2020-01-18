@@ -10,7 +10,7 @@
 
 int main(int argc, char **argv){
     
-    Int_t Nprotons = 0*1;
+    Int_t Nprotons = 1;
     double time = 0; // count the time since the proton entered the scintillator
 
     // start app and draw canvas
@@ -23,6 +23,8 @@ int main(int argc, char **argv){
 
     // simulation name
     std::string simname = Form("version_%.1f_%s",vObj->GetVersion(),vObj->GetInputName().c_str());
+    bool debugMode = false; // for debugging purposes, 1 photon at a time...
+    if (vObj->GetInputName()=="debug"){ debugMode = true; };
     // Form("version_%.1f_n_%.2f_emit_from_center",vObj->GetVersion(),bar->GetRefractiveIndex());
 
     // read input
@@ -36,7 +38,7 @@ int main(int argc, char **argv){
     
     
     // proton gun
-    TVector3 ProtonGunPosition = aux->pGunPosition;
+    TVector3 ProtonGunPosition = aux->pGunPosition + TVector3(0, 0, -(aux->length/2 + aux->WaveguideLength));
     TVector3 ProtonGunDirection = aux->pGunDirection;
     double   ProtonGunEnergy = aux->pGunEnergy; // [MeV]
     PrintTVector3( ProtonGunPosition );
@@ -44,29 +46,28 @@ int main(int argc, char **argv){
     
     
     // (1) build scintillation bar
-    Bar * bar = new Bar("Scintillation bar", aux->width, aux->thickness, aux->length);
+    Double_t BarOrigin[3] = {0. , 0., -(aux->length/2 + aux->WaveguideLength)};
+    Bar * bar = new Bar("Scintillation bar", aux->width, aux->thickness, aux->length, BarOrigin);
     bar -> SetRefractiveIndex(aux->refractiveIndex);
     bar -> SetPhotonsPerMeV(aux->PhotonsPerMeV);
     bar -> SetAbsorbtionLength(aux->AbsorbtionLength);
     bar -> SetVerbose(verbose);
     if (verbose>2) { bar->Print(); }
-
+    
     // (1.5) build waveguide
     Waveguide * waveguide = new Waveguide("Waveguide",
                                           aux->width/2, aux->WaveguideWidth/2,
                                           aux->thickness/2, aux->WaveguideWidth/2,
                                           aux->WaveguideLength);
-    
-//    waveguide -> SetAbsorbtionLength(aux->AbsorbtionLength);
-//    waveguide -> SetRefractiveIndex(aux->refractiveIndex);
+    waveguide -> SetAbsorbtionLength(aux->WaveguideAbsorbtionLength);
+    waveguide -> SetRefractiveIndex(aux->WaveguideRefractiveIndex);
     waveguide -> SetVerbose(verbose);
-
+    
     // open App and draw if verbosity is desired
     if (DoDrawScene) {
         c = new TCanvas("c", "c",100,100,1000,1000);
         bar -> Draw();
         waveguide -> Draw("same");
-        
     }
     
     
@@ -86,14 +87,14 @@ int main(int argc, char **argv){
             PrintLine();
         }
         
-        Proton * proton = new Proton (time, verbose );        
+        Proton * proton = new Proton (time, verbose );
         proton -> SetShowEveryNPhotons( aux->ShowEveryNPhotons );
         proton -> SetProducePhotons( DoProduceScintillationPhotons );
         proton -> SetDoDrawScene( DoDrawScene );
         proton -> SetProductionPosition( ProtonGunPosition );
         proton -> SetProductionDirection( ProtonGunDirection );
         proton -> SetEnergy( ProtonGunEnergy );
-        proton -> Shoot( bar , aux );
+        proton -> Shoot( bar , aux , debugMode , waveguide );
                 
         
         if (verbose>1){

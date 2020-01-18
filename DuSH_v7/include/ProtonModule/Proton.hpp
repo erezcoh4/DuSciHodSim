@@ -14,6 +14,7 @@
 #include "TPolyLine3D.h"
 #include "TRandom3.h"
 #include <BarModule/Bar.hpp>
+#include <WaveguideModule/Waveguide.hpp>
 #include "Auxiliary/version.hpp"
 #include <Auxiliary/auxiliary.hpp>
 #include "TGraph.h"
@@ -28,6 +29,7 @@ private:
     bool        protonInBar; // is the proton inside a scintillation bar?
     bool        DoDrawScene;
     bool        DoProduceScintillationPhotons;
+    bool        debugMode = false;
     Int_t       Npoints, verbose, NScintillationPhotons;
     int         ShowEveryNPhotons;
     TVector3    ProductionPosition, ProductionDirection, EndPosition;
@@ -78,8 +80,10 @@ public:
     Int_t     GetNScintillationPhotons () { return NScintillationPhotons; }
     
     // propagation
-    void                         Shoot (Bar * bar, auxiliary * aux);
-    void   ProduceScintillationPhotons (Bar * bar, auxiliary * aux, int Nphotons=0);
+    void                         Shoot (Bar * bar, auxiliary * aux, bool fdebugMode=false, Waveguide * waveguide = nullptr);
+    void   ProduceScintillationPhotons (Bar * bar, auxiliary * aux, int Nphotons=0,
+                                        TVector3 EmissionPos = TVector3(0,0,0),
+                                        Waveguide * waveguide = nullptr);
     void            UpdateProtonEnergy ( double dE );
         
     // time

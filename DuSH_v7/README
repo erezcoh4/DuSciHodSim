@@ -4,6 +4,7 @@ Changes from v6:
 ------------------
 1) Add waveguide for photons coupled to facet
 
+2) fixed bug in scintillation photon production - not from (0,0,0) but from proton position in each step...
 
 v6 Jan-04, 2020
 Changes from v5:

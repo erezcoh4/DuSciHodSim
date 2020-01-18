@@ -12,7 +12,7 @@ TGeoTrd2 (name, fdx1, fdx2, fdy1, fdy2, fdz){
     dx2 = fdx2;
     dy1 = fdy1;
     dy2 = fdy2;
-    defineFacets();
+    defineFacets();    
 }
 
 // ------------------------------------------------------- //
