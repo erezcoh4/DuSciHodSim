@@ -37,6 +37,9 @@ void Bar::defineFacets(){
     for (auto facetCenter : facetCenters){
         PrintTVector3( facetCenter );
     }
+    for (auto facetNormal : facetNormals){
+        PrintTVector3( facetNormal );
+    }
 }
 
 // ------------------------------------------------------- //

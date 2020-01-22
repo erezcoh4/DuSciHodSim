@@ -31,6 +31,7 @@ private:
     
     bool        photonArrivedAtFrontFacet; // can the photon be read out by SiPM if they're coupled with no waveguide?
     bool        photonArrivedAtWaveguideExit; // can the photon be read out by SiPM?
+    bool        photonAbsorbedInWaveguide;
     
     bool        photonAbsorbedInScintillator; // statistically, following 'absorbtion length' decay
     bool        photonReadOutByDetector; // statistically, following 'absorbtion length' decay
@@ -39,15 +40,18 @@ private:
     
     Int_t       Npoints, verbose;
     
-    double      TotalPathLength;
-    double      v_mm_sec;
-    double      ProductionTime, ExitTime;
+    double      TotalPathLength, TotalPathLengthInScintillator, TotalPathLengthInWaveguide;
+    
+    double      vScintillator_mm_sec, vWaveguide_mm_sec;
+    double      ProductionTime, ExitTime, ExitScintillatorTime, ExitWaveguideTime;
     
     TVector3    ProductionPosition, ProductionDirection;
     TVector3    photonStartPosition, photonEndPosition, photonDirection;
     TVector3    trajectoryStart;
     TVector3    trajectoryDirec;
+    
     TVector3    HitFrontFacetPos;
+    TVector3    HitWaveguideExitPos;
     
     TRandom3 * r;
     Double_t x, y, z;
@@ -71,8 +75,10 @@ public:
     void            SetTrajectoryStart (TVector3 v) { trajectoryStart = v;};
     void            SetTrajectoryDirec (TVector3 v);
     void                    SetVerbose (int v)      { verbose = v;};
-    void                      SetInBar (double n)   { photonInBar = true; v_mm_sec = 3.e11/n;}
-    void                 SetOutsideBar ()           { photonInBar = false; }
+    void                      SetInBar (double n)   { photonInBar = true; vScintillator_mm_sec = 3.e11/n;}
+    void                 SetOutsideBar ()           { photonInBar = false; vScintillator_mm_sec = 3.e11; }
+    void                SetInWaveguide (double n)   { photonInWaveguide = true; vWaveguide_mm_sec = 3.e11/n;}
+    void           SetOutsideWaveguide ()           { photonInWaveguide = false; vWaveguide_mm_sec = 3.e11; }
     void         SetProductionPosition (TVector3 v) { ProductionPosition = v; }
     void        SetProductionDirection (TVector3 v) { ProductionDirection = v; }
 
@@ -95,17 +101,19 @@ public:
     
     // propagation
     bool        PhotonTrajOppositeFacet (std::string facetName);
-    double  GetTrajectoryAngleWithPlane (Bar * bar, int facetIdx);
+    double  GetTrajectoryAngleWithPlane (TVector3 facetNormal, std::string facetName = "");
     void              EmitIsotropically (double fProductionTime, Bar * bar );
     void              PropagateInPaddle (Bar * bar);
     void                  ApplySnellLaw (Bar * bar, int facetIdx);
+    void                  ApplySnellLaw (Waveguide * Waveguide, int facetIdx);
     void           ApplySnellDivergence (TVector3 PlaneNormal,  double n_in);
     void DecideIfAbsorbedInScintillator ( double AbsorbtionLength );
+    void    DecideIfAbsorbedInWaveguide ( double AbsorbtionLength );
     void      DecideIfReadOutByDetector ();
     void             ArriveAtFrontFacet (); // what happens when a photon arrives at the front facet
     void           PropagateInWaveguide (Waveguide * waveguide);
     void          ArriveAtWaveguideExit ();
-    
+    void            flipPhotonDirection (std::string facetName = "Top");
     
     // print and draw
     void          PrintTrajectory (std::string name="");

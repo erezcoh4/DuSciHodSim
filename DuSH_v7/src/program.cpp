@@ -7,6 +7,7 @@
 #include "TView.h"
 #include "Auxiliary/version.hpp"
 #include <Auxiliary/auxiliary.hpp>
+#include "TGeoVolume.h"
 
 int main(int argc, char **argv){
     
@@ -66,8 +67,16 @@ int main(int argc, char **argv){
     // open App and draw if verbosity is desired
     if (DoDrawScene) {
         c = new TCanvas("c", "c",100,100,1000,1000);
+        TGeoVolume * barVol = new TGeoVolume("scintillator volume",bar);
+        barVol -> SetLineColor(1);
         bar -> Draw();
+        TGeoVolume * waveguideVol = new TGeoVolume("waveguide volume",waveguide);
+        waveguideVol -> SetLineColor(2);
         waveguide -> Draw("same");
+        if (verbose>4) {
+            aux->drawVertices(waveguide->GetFacetVertices());
+            aux->drawFacetCenters(waveguide->GetFacetCenters(),waveguide->GetFacetNormals());
+        }
     }
     
     
@@ -115,6 +124,5 @@ int main(int argc, char **argv){
     PrintLine(); std::cout << "done." << std::endl; PrintLine();
     return 0;
 }
-
 
 

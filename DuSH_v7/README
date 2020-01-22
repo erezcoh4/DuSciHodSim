@@ -6,6 +6,31 @@ Changes from v6:
 
 2) fixed bug in scintillation photon production - not from (0,0,0) but from proton position in each step...
 
+Conversion of MeV to MeVee, from Axel 
+trueE_MeVee = (a1*trueEDep) - a2*(1.0 - exp(-a3*pow(trueEDep, a4)));
+
+    // *********** parameters from a paper Hadey 1977    
+	//                                                                                                      
+    double a1 = 0.95;                                                                                                                                      
+    double a2 = 8.0;                                                                                                                                       
+    double a3 = 0.1;                                                                                                                                       
+    double a4 = 0.9;                                                                                                                                       
+
+    // *********** parameters from Or well describe a liquid scintillator NE-213                                                                                                   
+// ["IMPROVED PREDICTIONS OF NEUTRON DETECTION EFFICIENCY FOR HYDROCARBON SCINTILLATORS FROM 1 MeV TO ABOUT 300 MeV"]
+    double a1 = 0.83;
+    double a2 = 2.82;
+    double a3 = 0.25;
+    double a4 = 0.93;
+
+NE-102	-> Similar to EJ-212, BC-400
+NE-213	-> Similar to EJ-301, BC-501
+NE-224	-> Similar to EJ-305, BC-505
+NE-228	-> Can't find anything similar
+
+
+
+
 v6 Jan-04, 2020
 Changes from v5:
 ------------------

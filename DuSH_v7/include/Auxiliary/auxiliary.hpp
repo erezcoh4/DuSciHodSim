@@ -4,7 +4,10 @@
 #include <iomanip>
 #include <fstream>
 #include "TXMLEngine.h"
-
+#include "TGeoVolume.h"
+#include "TGeoManager.h"
+#include "TGeoMedium.h"
+#include "TPolyLine3D.h"
 
 #define PrintEmptyLine(){ std::cout << std::endl;}
 #define PrintLine(){ std::cout << "------------------------------------------------" << std::endl;}
@@ -238,10 +241,54 @@ public:
     
     
     
-    // auxilary
+    // trigonometry
     double      rad2deg (double angle_rad) {return angle_rad*180./3.1415;};
     double      deg2rad (double angle_deg) {return angle_deg*3.1415/180.;};
     
+
+    void drawVertices(std::vector<std::vector<TVector3>> facetVertices){
+        // draw waveguide vertices
+        int facetIdx = 1;
+        for (auto Vertices:facetVertices) {
+            Debug(1,Form("facetIdx: %d",facetIdx));
+            if (facetIdx!=0){
+                int vIdx = 1;
+                for (auto v:Vertices){
+                    Double_t origin[3] = {v.x()+facetIdx/3+vIdx/3, v.y()+facetIdx/3+vIdx/3,v.z()+facetIdx/3+vIdx/3};
+                    TGeoBBox * vBox = new TGeoBBox(4, 4, 4, origin);
+                    TGeoVolume * boxVol = new TGeoVolume(Form("facet %d vertex %d",facetIdx-1,vIdx-1),vBox);
+                    // boxVol -> SetLineColor(facetIdx);
+                    boxVol -> SetLineColor(vIdx);
+                    Debug(2, Form("facetIdx: %d, vertex %d at (%.1f,%.1f,%.1f)",facetIdx,vIdx,v.x(),v.y(),v.z()) );
+                    boxVol -> Draw("same");
+                    vIdx ++;
+                }
+            }
+            facetIdx++;
+        }
+    }
+    void drawFacetCenters(std::vector<TVector3> facetCenters,std::vector<TVector3> facetNormals){
+        // draw waveguide vertices
+        float f = 10; // normal vector size
+        for (int facetIdx = 0; facetIdx < 6; facetIdx++) {
+            TVector3 v = facetCenters.at(facetIdx);
+            TVector3 n = facetNormals.at(facetIdx);
+            Debug(1,Form("facetIdx: %d",facetIdx));
+            Double_t origin[3] = {v.x()+facetIdx/3, v.y()+facetIdx/3,v.z()+facetIdx/3};
+            TGeoBBox * vBox = new TGeoBBox(1, 1, 1, origin);
+            TGeoVolume * boxVol = new TGeoVolume(Form("facet %d",facetIdx),vBox);
+            boxVol -> SetLineColor(facetIdx+1);
+            Debug(2, Form("facetIdx: %d, center at (%.1f,%.1f,%.1f)",facetIdx,v.x(),v.y(),v.z()) );
+            boxVol -> Draw("same");
+            
+            
+            TPolyLine3D * normal = new TPolyLine3D(2);
+            normal -> SetPoint(0, v.x(), v.y(), v.z());
+            normal -> SetPoint(1, (v+n*f).x(), (v+n*f).y(), (v+n*f).z());
+            normal -> SetLineColor(facetIdx+1);
+            normal -> Draw();
+        }
+    }
     
     
 };

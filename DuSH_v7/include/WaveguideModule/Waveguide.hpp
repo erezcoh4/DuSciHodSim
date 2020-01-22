@@ -33,6 +33,7 @@ public:
     
     std::vector<std::string> facetNames;
     std::vector<TVector3>    facetCenters, facetNormals;
+    std::vector<std::vector<TVector3>> facetVertices;
     
     // setters
     void                        SetVerbose (int v)    { verbose = v;};
@@ -44,8 +45,16 @@ public:
     double              GetRefractiveIndex () {return refractiveIndex;};
     double GetTotalInternalReflectionAngle () {return TotalInternalReflectionAngle;}
     double             GetAbsorbtionLength () {return PhotonAbsorbtionLength;};
+    std::vector<std::vector<TVector3>> GetFacetVertices () {return facetVertices;};
+    std::vector<TVector3>  GetFacetCenters () {return facetCenters;};
+    std::vector<TVector3>  GetFacetNormals () {return facetNormals;};
+    
+    
+    
     // geometry
     void                      defineFacets ();
+    bool               CheckIfPointOnFacet ( int facetIdx, TVector3 pt);
+    bool                     ContainsPoint (const TVector3 position);
     
     // constructors
     Waveguide (const char *name, Double_t dx1, Double_t dx2, Double_t dy1, Double_t dy2, Double_t dz);
