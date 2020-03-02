@@ -13,6 +13,7 @@
 #define PrintLine(){ std::cout << "------------------------------------------------" << std::endl;}
 #define PrintXLine(){ std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;}
 #define PrintTVector3(v){ std::cout <<std::setprecision(1)<<std::fixed << #v<< ": ("<<v.X()<<","<<v.Y()<<","<<v.Z()<<")"<< std::endl;}
+#define Print4TVector3(v){ std::cout <<std::setprecision(4)<<std::fixed << #v<< ": ("<<v.X()<<","<<v.Y()<<","<<v.Z()<<")"<< std::endl;}
 
 
 class auxiliary
@@ -30,7 +31,12 @@ public:
     
     Int_t verbose;
     int ShowEveryNPhotons;
-    
+    int Nphotons = 0;
+    int NphotonsArrivedAtFrontFacet = 0;
+    int NphotonsArrivedAtWaveguideExit = 0;
+    int NphotonsInWaveguide = 0;
+    int NphotonsReachDetectorFacet = 0;
+
     // scintillator
     double      refractiveIndex;
     double      length, width, thickness; // [mm]
@@ -257,8 +263,8 @@ public:
                     Double_t origin[3] = {v.x()+facetIdx/3+vIdx/3, v.y()+facetIdx/3+vIdx/3,v.z()+facetIdx/3+vIdx/3};
                     TGeoBBox * vBox = new TGeoBBox(4, 4, 4, origin);
                     TGeoVolume * boxVol = new TGeoVolume(Form("facet %d vertex %d",facetIdx-1,vIdx-1),vBox);
-                    // boxVol -> SetLineColor(facetIdx);
-                    boxVol -> SetLineColor(vIdx);
+                    boxVol -> SetLineColor(facetIdx);
+                    // boxVol -> SetLineColor(vIdx);
                     Debug(2, Form("facetIdx: %d, vertex %d at (%.1f,%.1f,%.1f)",facetIdx,vIdx,v.x(),v.y(),v.z()) );
                     boxVol -> Draw("same");
                     vIdx ++;
@@ -291,7 +297,46 @@ public:
     }
     
     
+    
+    void UpdatePhotonCounts(
+                            bool photonArrivedAtFrontFacet,
+                            bool photonArrivedAtWaveguideExit,
+                            bool photonAbsorbedInScintillator,
+                            bool photonAbsorbedInWaveguide
+                            ){
+        Nphotons ++;
+        NphotonsArrivedAtFrontFacet += (int)photonArrivedAtFrontFacet;
+        
+        if (photonArrivedAtFrontFacet && !photonAbsorbedInScintillator){
+            NphotonsInWaveguide += 1;
+            
+            if (photonArrivedAtWaveguideExit && !photonAbsorbedInWaveguide){
+                NphotonsReachDetectorFacet += 1;
+            }
+        }
+    }
+    
+    
+    
+    void PrintSummary (){
+        
+        std::cout
+        << std::setprecision(1) << std::fixed
+        << "scintillaion photons summary: "
+        << std::endl << "--------------------"
+        << std::endl
+        << Nphotons << " photons produced, "
+        << std::endl
+        << 100.*float(NphotonsArrivedAtFrontFacet)/Nphotons << "% arrived at scintillator front facet, "
+        << std::endl
+        << 100.*float(NphotonsInWaveguide)/NphotonsArrivedAtFrontFacet << "% of them propagated in the waveguide, "
+        << std::endl
+        << 100.*float(NphotonsReachDetectorFacet)/NphotonsInWaveguide << "% of them reached detector facet, "
+        << std::endl;
+    }
 };
+
+
 
 
 #endif

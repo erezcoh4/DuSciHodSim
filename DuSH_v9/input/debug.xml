@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<Scintillator>
+    
+    <!-- charecteristics -->
+    <refractiveIndex> 1.5   </refractiveIndex>
+    <PhotonsPerMeV> 5    </PhotonsPerMeV>
+    <length> 2000           </length>           <!-- mm -->
+    <width> 200             </width>            <!-- mm -->
+    <thickness> 60          </thickness>        <!-- mm -->
+    <AbsorbtionLength> 10000</AbsorbtionLength> <!-- mm -->
+
+</Scintillator>
+
+
+<ProtonGun>
+    
+    <!-- charecteristics -->
+    <Energy> 2000           </Energy>           <!-- MeV -->
+    <x> 0                   </x>                <!-- position in [mm] -->
+    <y> -100                </y>                <!-- position in [mm] -->
+    <z> 0                   </z>                <!-- position in [mm] -->
+    <vx> 0                  </vx>               <!-- direction  -->
+    <vy> 1                  </vy>               <!-- direction  -->
+    <vz> 0                  </vz>               <!-- direction  -->
+
+</ProtonGun>
+
+
+<Display>
+    
+    <!-- charecteristics -->
+    <ShowEveryNPhotons> 1 </ShowEveryNPhotons>
+
+</Display>
+
+<Waveguide>
+    
+    <WaveguideWidth>    10            </WaveguideWidth>   <!-- mm -->
+    <WaveguideThickness>    60        </WaveguideThickness>   <!-- mm -->
+    <WaveguideLength>   200             </WaveguideLength>  <!-- mm -->
+    <WaveguideAbsorbtionLength>   10000  </WaveguideAbsorbtionLength>  <!-- mm -->
+    <WaveguideRefractiveIndex>   1.58    </WaveguideRefractiveIndex>
+    
+</Waveguide>

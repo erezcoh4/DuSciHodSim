@@ -47,7 +47,7 @@ int main(int argc, char **argv){
     
     
     // (1) build scintillation bar
-    Double_t BarOrigin[3] = {0. , 0., -(aux->length/2 + aux->WaveguideLength)};
+    Double_t BarOrigin[3] = {0. , 0., -(aux->length/2 + aux->WaveguideLength/2)};
     Bar * bar = new Bar("Scintillation bar", aux->width, aux->thickness, aux->length, BarOrigin);
     bar -> SetRefractiveIndex(aux->refractiveIndex);
     bar -> SetPhotonsPerMeV(aux->PhotonsPerMeV);
@@ -59,7 +59,7 @@ int main(int argc, char **argv){
     Waveguide * waveguide = new Waveguide("Waveguide",
                                           aux->width/2, aux->WaveguideWidth/2,
                                           aux->thickness/2, aux->WaveguideWidth/2,
-                                          aux->WaveguideLength);
+                                          aux->WaveguideLength/2);
     waveguide -> SetAbsorbtionLength(aux->WaveguideAbsorbtionLength);
     waveguide -> SetRefractiveIndex(aux->WaveguideRefractiveIndex);
     waveguide -> SetVerbose(verbose);
@@ -73,7 +73,7 @@ int main(int argc, char **argv){
         TGeoVolume * waveguideVol = new TGeoVolume("waveguide volume",waveguide);
         waveguideVol -> SetLineColor(2);
         waveguide -> Draw("same");
-        if (verbose>4) {
+        if (verbose>7) {
             aux->drawVertices(waveguide->GetFacetVertices());
             aux->drawFacetCenters(waveguide->GetFacetCenters(),waveguide->GetFacetNormals());
         }
@@ -81,8 +81,9 @@ int main(int argc, char **argv){
     
     
     // open output csv files
-    std::string csv_header =    "ArrivedAtFrontFacet,DirectFromProduction,AbsorbedInScintillator,ReadOutByDetector,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLength,TimeFromStart,HitFrontFacetPosX,HitFrontFacetPosY,HitFrontFacetPosZ";
+    std::string csv_header =    "ArrivedAtFrontFacet,ArrivedAtWaveguideExit,DirectFromProduction,AbsorbedInScintillator,AbsorbedInWaveguide,ReadOutByDetector,HitBackFacet,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLengthInScintillator,TotalPathLengthInWaveguide,TotalPathLength,TimeFromStart,HitFrontFacetPosX,HitFrontFacetPosY,HitFrontFacetPosZ,HitWaveguideExitPosX,HitWaveguideExitPosY,HitWaveguideExitPosZ";
     aux -> open_photons_csv(simname , csv_header );
+    
     
     
     
@@ -112,6 +113,9 @@ int main(int argc, char **argv){
         }
     }
     
+    aux->PrintSummary();
+    PrintLine(); std::cout << "done." << std::endl; PrintLine();
+
     // update canvas
     if (DoDrawScene) {
         //        TView *view = c -> GetView();
@@ -120,8 +124,6 @@ int main(int argc, char **argv){
         // run programm
         theApp.Run();
     }
-    
-    PrintLine(); std::cout << "done." << std::endl; PrintLine();
     return 0;
 }
 
