@@ -15,6 +15,7 @@
 #include "TRandom3.h"
 #include <BarModule/Bar.hpp>
 #include <WaveguideModule/Waveguide.hpp>
+#include <WaveguideMarginModule/WaveguideMargin.hpp>
 #include "Auxiliary/version.hpp"
 #include "Auxiliary/auxiliary.hpp"
 
@@ -28,20 +29,25 @@ private:
     
     bool        photonInBar; // is the photon inside a scintillation bar?
     bool        photonInWaveguide; // is the photon inside the waveguide?
+    bool        photonInWaveguideMargin;
     
     bool        photonHitBackFacet; // did photon hit back facet of scintillator (we might place another detector there so crucial)
     bool        photonArrivedAtFrontFacet; // can the photon be read out by SiPM if they're coupled with no waveguide?
     bool        photonArrivedAtWaveguideExit; // can the photon be read out by SiPM?
-    bool        photonAbsorbedInWaveguide;
+    bool        photonArrivedAtWaveguideMarginExit; // can the photon be read out by SiPM?
     
     bool        photonAbsorbedInScintillator; // statistically, following 'absorbtion length' decay
+    bool        photonAbsorbedInWaveguide;
+    bool        photonAbsorbedInWaveguideMargin;
+
+    
     bool        photonReadOutByDetector; // statistically, following 'absorbtion length' decay
     bool        photonDirectFromProduction; // has the photon hit any facet, or got to the end directly from production?
     
     
     Int_t       Npoints, verbose;
     
-    double      TotalPathLength, TotalPathLengthInScintillator, TotalPathLengthInWaveguide;
+    double      TotalPathLength, TotalPathLengthInScintillator, TotalPathLengthInWaveguide, TotalPathLengthInWaveguideMargin;
     
 //    double      vScintillator_mm_sec, vWaveguide_mm_sec;
     double      velocity_mm_sec;  // in [mm/sec]
@@ -55,7 +61,8 @@ private:
     
     TVector3    HitFrontFacetPos;
     TVector3    HitWaveguideExitPos;
-    
+    TVector3    HitWaveguideMarginExitPos;
+
     TRandom3 * r;
     Double_t x, y, z;
     
@@ -87,44 +94,56 @@ public:
 
     
     // getters
-    bool        GetArrivedAtFrontFacet () { return photonArrivedAtFrontFacet;};
-    bool     GetArrivedAtWaveguideExit () { return photonArrivedAtWaveguideExit;};
-    bool     GetAbsorbedInScintillator () { return photonAbsorbedInScintillator;};
-    bool        GetAbsorbedInWaveguide () { return photonAbsorbedInWaveguide;};
-    bool          GetReadOutByDetector () { return photonReadOutByDetector;};
-    bool       GetDirectFromProduction () { return photonDirectFromProduction; }
-    bool               GetHitBackFacet () { return photonHitBackFacet;    }
+    bool                  GetArrivedAtFrontFacet () { return photonArrivedAtFrontFacet;};
+    bool               GetArrivedAtWaveguideExit () { return photonArrivedAtWaveguideExit;};
+    bool         GetArrivedAtWaveguideMarginExit () { return photonArrivedAtWaveguideMarginExit;};
     
-    double   GetTotalPathLengthInScintillator () { return TotalPathLengthInScintillator; }
-    double      GetTotalPathLengthInWaveguide () { return TotalPathLengthInWaveguide; }
-    double                 GetTotalPathLength () { return TotalPathLength; }
-    double                   GetTimeFromStart ();
+    bool               GetAbsorbedInScintillator () { return photonAbsorbedInScintillator;};
+    bool                  GetAbsorbedInWaveguide () { return photonAbsorbedInWaveguide;};
+    bool            GetAbsorbedInWaveguideMargin () { return photonAbsorbedInWaveguideMargin;};
     
-    TVector3        GetTrajectoryStart () { return trajectoryStart;};
-    TVector3        GetTrajectoryDirec () { return trajectoryDirec;};  
-    TVector3     GetProductionPosition () { return ProductionPosition; };
-    TVector3    GetProductionDirection () { return ProductionDirection; };
-    TVector3       GetHitFrontFacetPos () { return HitFrontFacetPos; };
-    TVector3    GetHitWaveguideExitPos () { return HitWaveguideExitPos; };
+    bool                    GetReadOutByDetector () { return photonReadOutByDetector;};
+    bool                 GetDirectFromProduction () { return photonDirectFromProduction; }
+    bool                         GetHitBackFacet () { return photonHitBackFacet;    }
     
+    double      GetTotalPathLengthInScintillator () { return TotalPathLengthInScintillator; }
+    double         GetTotalPathLengthInWaveguide () { return TotalPathLengthInWaveguide; }
+    double   GetTotalPathLengthInWaveguideMargin () { return TotalPathLengthInWaveguideMargin; }
+    double                    GetTotalPathLength () { return TotalPathLength; }
+    double                      GetTimeFromStart ();
+    
+    TVector3                  GetTrajectoryStart () { return trajectoryStart;};
+    TVector3                  GetTrajectoryDirec () { return trajectoryDirec;};
+    TVector3               GetProductionPosition () { return ProductionPosition; };
+    TVector3              GetProductionDirection () { return ProductionDirection; };
+    TVector3                 GetHitFrontFacetPos () { return HitFrontFacetPos; };
+    TVector3              GetHitWaveguideExitPos () { return HitWaveguideExitPos; };
+    TVector3        GetHitWaveguideMarginExitPos () { return HitWaveguideMarginExitPos; };
+
     // geometry
-    TVector3           TrajIntWithPlane (const TVector3 planeCenter, const  TVector3 planeNormal);
+    TVector3                    TrajIntWithPlane (const TVector3 planeCenter, const  TVector3 planeNormal);
     
     // propagation
-    bool        PhotonTrajOppositeFacet (std::string facetName);
-    double  GetTrajectoryAngleWithPlane (TVector3 facetNormal, std::string facetName = "");
-    void              EmitIsotropically (double fProductionTime, Bar * bar );
-    void              PropagateInPaddle (Bar * bar);
-    void                  ApplySnellLaw (Bar * bar, int facetIdx);
-    void                  ApplySnellLaw (Waveguide * Waveguide, int facetIdx);
-    void           ApplySnellDivergence (TVector3 PlaneNormal,  double n_in);
-    void DecideIfAbsorbedInScintillator ( double AbsorbtionLength );
-    void    DecideIfAbsorbedInWaveguide ( double AbsorbtionLength );
-    void      DecideIfReadOutByDetector ();
-    void             ArriveAtFrontFacet (); // what happens when a photon arrives at the front facet
-    void           PropagateInWaveguide (Waveguide * waveguide);
-    void          ArriveAtWaveguideExit ();
-    void            flipPhotonDirection (std::string facetName = "Top");
+    bool                 PhotonTrajOppositeFacet (std::string facetName);
+    double           GetTrajectoryAngleWithPlane (TVector3 facetNormal, std::string facetName = "");
+    void                       EmitIsotropically (double fProductionTime, Bar * bar );
+    void                       PropagateInPaddle (Bar * bar);
+    void                           ApplySnellLaw (Bar * bar, int facetIdx);
+    void                           ApplySnellLaw (Waveguide * waveguide, int facetIdx);
+    void                           ApplySnellLaw (WaveguideMargin * wgmargin, int facetIdx);
+    void                    ApplySnellDivergence (TVector3 PlaneNormal,  double n_in);
+    
+    void          DecideIfAbsorbedInScintillator (double AbsorbtionLength );
+    void             DecideIfAbsorbedInWaveguide (double AbsorbtionLength );
+    void       DecideIfAbsorbedInWaveguideMargin (double AbsorbtionLength );
+    
+    void               DecideIfReadOutByDetector ();
+    void                      ArriveAtFrontFacet (); // what happens when a photon arrives at the front facet
+    void                    PropagateInWaveguide (Waveguide * waveguide);
+    void              PropagateInWaveguideMargin (WaveguideMargin * wgmargin);
+    void                   ArriveAtWaveguideExit ();
+    void             ArriveAtWaveguideMarginExit ();
+    void                     flipPhotonDirection (std::string facetName = "Top");
     
     // print and draw
     void          PrintTrajectory (std::string name="");

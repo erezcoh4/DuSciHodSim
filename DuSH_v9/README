@@ -1,4 +1,11 @@
 
+v9 Mar-2, 2020
+Changes from v8:
+------------------
+1) Added a boxed-shaped light guide at the end of the trapezoid waveguide to allow standard mechanical coupling to PMT/SiPMs. Stretching no longer than a couple of centimetres, it is called WaveguideMargin and from software design perspective, based entirely on Waveguide class.
+
+
+
 v8 Feb-14, 2020
 Changes from v7:
 ------------------

@@ -15,6 +15,7 @@
 #include "TRandom3.h"
 #include <BarModule/Bar.hpp>
 #include <WaveguideModule/Waveguide.hpp>
+#include <WaveguideMarginModule/WaveguideMargin.hpp>
 #include "Auxiliary/version.hpp"
 #include <Auxiliary/auxiliary.hpp>
 #include "TGraph.h"
@@ -80,10 +81,16 @@ public:
     Int_t     GetNScintillationPhotons () { return NScintillationPhotons; }
     
     // propagation
-    void                         Shoot (Bar * bar, auxiliary * aux, bool fdebugMode=false, Waveguide * waveguide = nullptr);
+    void                         Shoot (Bar * bar, auxiliary * aux,
+                                        bool fdebugMode=false,
+                                        Waveguide * waveguide = nullptr,
+                                        WaveguideMargin * wgmargin = nullptr);
+    
     void   ProduceScintillationPhotons (Bar * bar, auxiliary * aux, int Nphotons=0,
                                         TVector3 EmissionPos = TVector3(0,0,0),
-                                        Waveguide * waveguide = nullptr);
+                                        Waveguide * waveguide = nullptr,
+                                        WaveguideMargin * wgmargin = nullptr);
+    
     void            UpdateProtonEnergy ( double dE );
         
     // time

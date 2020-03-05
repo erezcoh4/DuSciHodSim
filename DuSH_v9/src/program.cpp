@@ -1,5 +1,6 @@
 #include <BarModule/Bar.hpp>
 #include <WaveguideModule/Waveguide.hpp>
+#include <WaveguideMarginModule/WaveguideMargin.hpp>
 #include <PhotonModule/Photon.hpp>
 #include <ProtonModule/Proton.hpp>
 #include "TCanvas.h"
@@ -55,7 +56,7 @@ int main(int argc, char **argv){
     bar -> SetVerbose(verbose);
     if (verbose>2) { bar->Print(); }
     
-    // (1.5) build waveguide
+    // (1.1) build trapezoid waveguide
     Waveguide * waveguide = new Waveguide("Waveguide",
                                           aux->width/2, aux->WaveguideWidth/2,
                                           aux->thickness/2, aux->WaveguideThickness/2,
@@ -63,6 +64,23 @@ int main(int argc, char **argv){
     waveguide -> SetAbsorbtionLength(aux->WaveguideAbsorbtionLength);
     waveguide -> SetRefractiveIndex(aux->WaveguideRefractiveIndex);
     waveguide -> SetVerbose(verbose);
+    
+    // (1.2) Add a boxed-shaped light guide at the end of the trapezoid waveguide to allow standard mechanical coupling to PMT/SiPMs
+//    WaveguideMargin * wgmargin = new WaveguideMargin("Waveguide Margin",
+//                                                     aux->WaveguideWidth/2, aux->WaveguideWidth/2,
+//                                                     aux->WaveguideWidth/2, aux->WaveguideWidth/2,
+//                                                     aux->WaveguideMarginLength/2);
+    Double_t WGmarginOrigin[3] = {0. , 0., aux->WaveguideLength/2 + aux->WaveguideMarginLength/2};
+    WaveguideMargin * wgmargin = new WaveguideMargin("Waveguide Margin",
+                                                     aux->WaveguideWidth,
+                                                     aux->WaveguideWidth,
+                                                     aux->WaveguideMarginLength,
+                                                     WGmarginOrigin);
+    wgmargin -> SetAbsorbtionLength(aux->WaveguideAbsorbtionLength);
+    wgmargin -> SetRefractiveIndex(aux->WaveguideRefractiveIndex);
+    wgmargin -> SetVerbose(verbose);
+
+    
     
     // open App and draw if verbosity is desired
     if (DoDrawScene) {
@@ -73,6 +91,7 @@ int main(int argc, char **argv){
         TGeoVolume * waveguideVol = new TGeoVolume("waveguide volume",waveguide);
         waveguideVol -> SetLineColor(2);
         waveguide -> Draw("same");
+        wgmargin -> Draw("same");
         if (verbose>7) {
             aux->drawVertices(waveguide->GetFacetVertices());
             aux->drawFacetCenters(waveguide->GetFacetCenters(),waveguide->GetFacetNormals());
@@ -81,7 +100,7 @@ int main(int argc, char **argv){
     
     
     // open output csv files
-    std::string csv_header =    "ArrivedAtFrontFacet,ArrivedAtWaveguideExit,DirectFromProduction,AbsorbedInScintillator,AbsorbedInWaveguide,ReadOutByDetector,HitBackFacet,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLengthInScintillator,TotalPathLengthInWaveguide,TotalPathLength,TimeFromStart,HitFrontFacetPosX,HitFrontFacetPosY,HitFrontFacetPosZ,HitWaveguideExitPosX,HitWaveguideExitPosY,HitWaveguideExitPosZ";
+    std::string csv_header =    "ArrivedAtFrontFacet,ArrivedAtWaveguideExit,ArrivedAtWaveguideMarginExit,DirectFromProduction,AbsorbedInScintillator,AbsorbedInWaveguide,ReadOutByDetector,HitBackFacet,ProductionDirectionX,ProductionDirectionY,ProductionDirectionZ,TotalPathLengthInScintillator,TotalPathLengthInWaveguide,TotalPathLength,TimeFromStart,HitFrontFacetPosX,HitFrontFacetPosY,HitFrontFacetPosZ,HitWaveguideExitPosX,HitWaveguideExitPosY,HitWaveguideExitPosZ,HitWaveguideMarginExitPosX,HitWaveguideMarginExitPosY,HitWaveguideMarginExitPosZ";
     aux -> open_photons_csv(simname , csv_header );
     
     
@@ -104,7 +123,7 @@ int main(int argc, char **argv){
         proton -> SetProductionPosition( ProtonGunPosition );
         proton -> SetProductionDirection( ProtonGunDirection );
         proton -> SetEnergy( ProtonGunEnergy );
-        proton -> Shoot( bar , aux , debugMode , waveguide );
+        proton -> Shoot( bar , aux , debugMode , waveguide , wgmargin );
                 
         
         if (verbose>1){

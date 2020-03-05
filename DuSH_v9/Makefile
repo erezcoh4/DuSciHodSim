@@ -22,6 +22,7 @@ SRC      :=                      		\
    $(wildcard src/FaceModule/*.cpp) 	\
    $(wildcard src/BarModule/*.cpp) 		\
    $(wildcard src/WaveguideModule/*.cpp) 		\
+   $(wildcard src/WaveguideMarginModule/*.cpp) 		\
    $(wildcard src/PhotonModule/*.cpp) 	\
    $(wildcard src/ProtonModule/*.cpp) 	\
    $(wildcard src/*.cpp)         		\

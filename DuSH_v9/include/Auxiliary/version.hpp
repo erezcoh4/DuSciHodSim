@@ -2,7 +2,7 @@
 #define VERSION_HPP
 // ---------------------------------
 // version number
-#define vNumber 8.0
+#define vNumber 9.0
 // ---------------------------------
 
 #include <iostream>
@@ -44,7 +44,7 @@ public:
         std::cout << std::endl;
         std::cout << "usage: ";
         std::cout << std::endl;
-        std::cout << "> ./RunProgram <configuration=\"typical\"> <verbose=0> ";
+        std::cout << "> ./RunProgram <configuration=\"EJ204\"> <verbose=0> ";
         std::cout << std::endl;
         std::cout << std::endl;
         

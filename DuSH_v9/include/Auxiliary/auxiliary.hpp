@@ -24,7 +24,7 @@ private:
     std::string csvfilename;
     std::ofstream csvfile;
     
-    const std::string xmlpath = "/Users/erezcohen/Desktop/Projects/DubnaSciHod/Software/DuSciHodSim/DuSH_v8/input";
+    const std::string xmlpath = "/Users/erezcohen/Desktop/Projects/DubnaSciHod/Software/DuSciHodSim/DuSH_v9/input";
     std::string xmlfilename;
     
 public:
@@ -45,6 +45,9 @@ public:
     // waveguide
     double      WaveguideWidth, WaveguideLength, WaveguideAbsorbtionLength, WaveguideThickness; // [mm]
     double      WaveguideRefractiveIndex;
+    
+    // waveguide margin
+    double      WaveguideMarginLength;
     
     // proton gun
     double      pGunEnergy;
@@ -220,6 +223,23 @@ public:
             child = xml.GetNext(child);
         }
         
+        // waveguide margin
+        WaveguideMarginLength = 20; // [mm]
+        XMLNodePointer_t WaveguideMarginNode = xml.GetNext(WaveguideNode);
+        std::cout << xml.GetNodeName(WaveguideMarginNode) << std::endl;
+        child = xml.GetChild(WaveguideMarginNode);
+        while (child != 0) {
+            
+            std::cout << xml.GetNodeName(child) << ": " << xml.GetNodeContent(child) << std::endl;
+            
+            if ( strcmp(xml.GetNodeName(child),"WaveguideMarginLength") == 0) {
+                
+                WaveguideMarginLength = std::stod(xml.GetNodeContent(child));
+                
+            }
+            child = xml.GetNext(child);
+        }
+        
         // Release memory before exit
         xml.FreeDoc(xmldoc);
         
@@ -308,7 +328,8 @@ public:
                             bool photonArrivedAtFrontFacet,
                             bool photonArrivedAtWaveguideExit,
                             bool photonAbsorbedInScintillator,
-                            bool photonAbsorbedInWaveguide
+                            bool photonAbsorbedInWaveguide,
+                            bool photonAbsorbedInWaveguideMargin
                             ){
         Nphotons ++;
         NphotonsArrivedAtFrontFacet += (int)photonArrivedAtFrontFacet;
@@ -316,7 +337,7 @@ public:
         if (photonArrivedAtFrontFacet && !photonAbsorbedInScintillator){
             NphotonsInWaveguide += 1;
             
-            if (photonArrivedAtWaveguideExit && !photonAbsorbedInWaveguide){
+            if (photonArrivedAtWaveguideExit && !photonAbsorbedInWaveguide && !photonAbsorbedInWaveguideMargin){
                 NphotonsReachDetectorFacet += 1;
             }
         }

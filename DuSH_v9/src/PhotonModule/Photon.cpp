@@ -30,8 +30,9 @@ TPolyLine3D( n ){
     TotalPathLength = 0;
     TotalPathLengthInScintillator = 0;
     TotalPathLengthInWaveguide = 0;
-    HitFrontFacetPos    = TVector3(-999,-999,-999);
-    HitWaveguideExitPos = TVector3(-999,-999,-999);
+    HitFrontFacetPos            = TVector3(-999,-999,-999);
+    HitWaveguideExitPos         = TVector3(-999,-999,-999);
+    HitWaveguideMarginExitPos   = TVector3(-999,-999,-999);
     this -> SetLineColor( 1 );
 }
 
@@ -462,6 +463,34 @@ void Photon::PrintPath (std::string name){
 }
 
 
+// ------------------------------------------------------- //
+void Photon::flipPhotonDirection(std::string facetName){
+    
+    double shiftFromFacet = 0.1; // [mm]
+    if (facetName == "Top" || facetName == "Bottom"){
+        photonDirection.SetY( -photonDirection.y() );
+        
+        if ( facetName == "Top")
+            photonEndPosition.SetY( photonEndPosition.y() - shiftFromFacet );
+        else
+            photonEndPosition.SetY( photonEndPosition.y() + shiftFromFacet );
+    }
+    else if (facetName == "Left" || facetName == "Right") {
+        photonDirection.SetX( -photonDirection.x() );
+        
+        if ( facetName == "Left")
+            photonEndPosition.SetX( photonEndPosition.x() - shiftFromFacet );
+        else
+            photonEndPosition.SetX( photonEndPosition.x() + shiftFromFacet );
+    }
+    else if (facetName == "Back" || facetName == "Front") {
+        photonDirection.SetZ( -photonDirection.z() );
+        
+        if (facetName == "Back")
+            photonEndPosition.SetZ( photonEndPosition.z() + shiftFromFacet );
+    }
+}
+
 
 // ------------------------------------------------------- //
 void Photon::ArriveAtWaveguideExit(){
@@ -470,10 +499,22 @@ void Photon::ArriveAtWaveguideExit(){
     photonArrivedAtWaveguideExit = true;
     HitWaveguideExitPos = photonEndPosition;
     
+    this -> SetLineColor( 4 );
+}
+
+
+// ------------------------------------------------------- //
+void Photon::ArriveAtWaveguideMarginExit(){
+    // move to waveguide
+    photonInWaveguide = false;
+    photonArrivedAtWaveguideExit = true;
+    photonArrivedAtWaveguideMarginExit = true;
+    HitWaveguideMarginExitPos = photonEndPosition;
+    
     // visualize
     // (1) set the photon to shoot straight forward
     // (2) change the color of the photons that arrived at the front facet to blue
-    this -> SetLineColor( 4 );
+    this -> SetLineColor( 5 );
     photonEndPosition = photonEndPosition + 500 * TVector3(0,0,1);
     this -> SetPoint(Npoints,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
         
@@ -609,23 +650,150 @@ void Photon::PropagateInWaveguide( Waveguide * waveguide ){
     this -> DecideIfAbsorbedInWaveguide( waveguide->GetAbsorbtionLength() );
 }
 
+// ------------------------------------------------------- //
+void Photon::PropagateInWaveguideMargin( WaveguideMargin * wgmargin ){
+    // same as Photon::PropagateInWaveguide
+    Debug(2 , "Photon::PropagateInWaveguideMargin()");
+    SetInWaveguide(wgmargin->GetRefractiveIndex());
+    
+    int LastHitFacetIdx = -1;
+    
+    while (photonInWaveguideMargin && (Npoints < MAXPHOTONSTEPS)) { // stop if number of points it too large
+        
+        this -> SetTrajectoryDirec( photonDirection );
+        this -> SetTrajectoryStart( photonStartPosition );
+        if (verbose>2){ Debug(1,"photon in waveguide margin"); PrintTrajectory("expected"); }
+        
+        // (3.2) Decide if the paddle bounding box could be crossed by a vector.
+        // intersect with paddle facets determines photon end position...
+        bool foundIntersectionPoint = false;
+        for (int facetIdx=0; facetIdx<6; facetIdx++){
+            
+            if (foundIntersectionPoint) continue;
+            std::string fName = wgmargin->facetNames.at(facetIdx).c_str();
+            
+            Debug(2 , Form("looking for waveguide intersection at *%s* (LastHitFacetIdx %d)", fName.c_str() ,LastHitFacetIdx) );
+            
+            // avoid from intersecting trajectory with wrong facet - a one which is opposite to photon direction
+            if (PhotonTrajOppositeFacet( fName )){
+                Debug(2, "Photon Trajory Opposite Facet, continuing to next facet \n" );
+                continue;
+            }
+            
+            if (facetIdx!=LastHitFacetIdx ){
+                Debug(3, "Yet haven't found, and looking for plane intersection: ");
+                
+                TVector3 FacetIntersection =
+                this -> TrajIntWithPlane ( wgmargin->facetCenters.at(facetIdx), wgmargin->facetNormals.at(facetIdx) );
+                
+                if (verbose>3) {Print4TVector3(FacetIntersection);}
+                
+                if (FacetIntersection.x()!=FacetIntersection.y() && FacetIntersection.x()!=FacetIntersection.z()){
+                    
+//                    if ( wgmargin->CheckIfPointOnFacet( facetIdx, FacetIntersection ) ){
+                    if (    abs(FacetIntersection.x() - wgmargin->GetCenter().x()) <= wgmargin -> GetWidth()/2     + 0.1
+                        &&  abs(FacetIntersection.y() - wgmargin->GetCenter().y()) <= wgmargin -> GetThickness()/2 + 0.1
+                        &&  abs(FacetIntersection.z() - wgmargin->GetCenter().z()) <= wgmargin -> GetLength()/2    + 0.1){
+                    
+                        Debug(4, "photon met waveguide margin facet. apply snell law");
+                        if (wgmargin->facetNames.at(facetIdx) != "Front"){
+                            photonDirectFromProduction = false;
+                        }
+                        
+                        photonEndPosition = FacetIntersection;
+                        foundIntersectionPoint = true;
+                        LastHitFacetIdx = facetIdx;
+                        
+                        this -> ApplySnellLaw( wgmargin, facetIdx );
+                    }
+                    else {
+                        Debug(4, "intersection point of photon with plane plane not on facet" );
+                    }
+                }
+                if (verbose>2){
+                    std::cout << "done stepping through *" << fName << "* facet" << std::endl;
+                    PrintEmptyLine();
+                }
+            }
+        }
+        double StepLength_mm = (photonEndPosition - photonStartPosition).Mag(); // measured in [mm]
+        TotalPathLength += StepLength_mm;
+        TotalPathLengthInWaveguideMargin += StepLength_mm;
+        TimeFromStart += StepLength_mm / velocity_mm_sec;
+
+        
+        // add step point
+        Npoints++;
+        this -> SetPoint(Npoints-1,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
+        PathPoints.push_back( photonEndPosition );
+        photonStartPosition = photonEndPosition;
+                
+        // break loop if for some reason photon is outside waveguide
+        if ( !wgmargin->ContainsPoint( photonStartPosition) ) {
+            photonInWaveguideMargin = false;
+            Debug(2, Form("Photon at (%.3f,%.3f,%.3f) is no longer in waveguide for some reason. Breaking propagation steps.",
+                  photonStartPosition.x(),photonStartPosition.y(),photonStartPosition.z()));
+        }
+        // break loop if haven't found any interaction point in either facet - due to some funny behavior
+        if (!foundIntersectionPoint){
+            photonInWaveguideMargin = false;
+            Debug(2, "haven't found any interaction point in either facet, due to some funny behavior");
+        }
+        if (verbose>2) {
+            Debug(2,"completed photon step in waveguide");
+            PrintTVector3(photonEndPosition);
+            PrintTVector3(photonDirection);
+            Debug(2, Form("Number of photon steps: %d, photon %s in waveguide",
+                          Npoints-1, photonInWaveguideMargin ? "still" : "not") );
+            PrintLine();
+        }
+        
+    }
+    
+    if (!photonInWaveguideMargin){ // photon emerged from waveguide
+        SetTrajectoryStart( photonEndPosition );
+        SetTrajectoryDirec( photonDirection );
+        photonEndPosition = photonEndPosition + 500 * photonDirection;
+        
+        // add step point in world, outside scintillator and waveguide, if the photon did not exit the waveguide
+        // from the detector (front) side...
+        if (!photonArrivedAtWaveguideMarginExit){
+            Npoints++;
+            this -> SetPoint(Npoints-1,photonEndPosition.X(),photonEndPosition.Y(),photonEndPosition.Z());
+            PathPoints.push_back( photonEndPosition );
+            TimeFromStart += 10;
+        }
+        
+        if (verbose>3){
+            // DrawTrajectory();
+            PrintTrajectory("outside waveguide margin");
+            Debug(3,"photon exitted from waveguide margin!");
+            PrintLine();
+        }
+    }
+    this -> DecideIfAbsorbedInWaveguideMargin( wgmargin->GetAbsorbtionLength() );
+}
 
 // ------------------------------------------------------- //
 void Photon::DecideIfAbsorbedInWaveguide( double AbsorbtionLength ){
-    // effectively decide if photon is absorbed in scintillator
-    // following an 'absorbtion length' decay in the paddle
-    // by checking its total path length in the scintillator,
-    // and then statistically deciding wether or not it was absorbed
-    // by generating a random uniform number, and checking if its smaller then an exponential
-    // decay function value at the photon total path length
-    photonAbsorbedInScintillator = false;
-    
+    // same as Photon::::DecideIfAbsorbedInScintillator
+    photonAbsorbedInWaveguide = false;
     double random_number = r -> Uniform(0.0,1.0);
     if (random_number > exp( -TotalPathLengthInWaveguide/AbsorbtionLength ) ){
         photonAbsorbedInWaveguide = true;
         photonReadOutByDetector = false;
     }
-        
+}
+
+// ------------------------------------------------------- //
+void Photon::DecideIfAbsorbedInWaveguideMargin( double AbsorbtionLength ){
+    // same as Photon::::DecideIfAbsorbedInScintillator
+    photonAbsorbedInWaveguideMargin = false;
+    double random_number = r -> Uniform(0.0,1.0);
+    if (random_number > exp( -TotalPathLengthInWaveguide/AbsorbtionLength ) ){
+        photonAbsorbedInWaveguideMargin = true;
+        photonReadOutByDetector = false;
+    }
 }
 
 
@@ -670,30 +838,43 @@ void Photon::ApplySnellLaw(Waveguide * waveguide, int facetIdx){
 }
 
 
+
 // ------------------------------------------------------- //
-void Photon::flipPhotonDirection(std::string facetName){
+void Photon::ApplySnellLaw(WaveguideMargin * wgmaring, int facetIdx){
+    // Same as ApplySnellLaw() that is used the scintillator, but for the waveguide
+    Debug(2 , Form("Photon::ApplySnellLaw(%s)",wgmaring->facetNames.at(facetIdx).c_str()));
     
-    double shiftFromFacet = 0.1; // [mm]
-    if (facetName == "Top" || facetName == "Bottom"){
-        photonDirection.SetY( -photonDirection.y() );
-        
-        if ( facetName == "Top")
-            photonEndPosition.SetY( photonEndPosition.y() - shiftFromFacet );
-        else
-            photonEndPosition.SetY( photonEndPosition.y() + shiftFromFacet );
+    // if photon touched the front facet of the scintillation bar
+    // and intersected with its plane,
+    // it emerged out of the paddle
+    if (wgmaring->facetNames.at(facetIdx) == "Front"){
+        ArriveAtWaveguideMarginExit();
+        return;
     }
-    else if (facetName == "Left" || facetName == "Right") {
-        photonDirection.SetX( -photonDirection.x() );
+    
+    // photon emerge out of the
+    // waveguide also if its angle is smaller than the critical angle
+    // for total internal reflection
+    double photonTrajectoryAngleWithPlane = this -> GetTrajectoryAngleWithPlane(wgmaring->facetNormals.at(facetIdx),
+                                                                                wgmaring->facetNames.at(facetIdx) );
+    Debug(3 , Form("photon Trajectory Angle With Plane: %.1f deg.", aux.rad2deg(photonTrajectoryAngleWithPlane)));
+    
+    // flip photon direction
+    if ( photonTrajectoryAngleWithPlane > wgmaring->GetTotalInternalReflectionAngle() ){ // total internal reflection
+    
+        Debug(3 , Form("angle %.1f deg. > TIR = %.1f deg., so reflected!",
+                       aux.rad2deg(photonTrajectoryAngleWithPlane), aux.rad2deg(wgmaring->GetTotalInternalReflectionAngle())));
         
-        if ( facetName == "Left")
-            photonEndPosition.SetX( photonEndPosition.x() - shiftFromFacet );
-        else
-            photonEndPosition.SetX( photonEndPosition.x() + shiftFromFacet );
-    }
-    else if (facetName == "Back" || facetName == "Front") {
-        photonDirection.SetZ( -photonDirection.z() );
+        this -> flipPhotonDirection( wgmaring->facetNames.at(facetIdx) );
+                
+    } else { // photon exit waveguide
         
-        if (facetName == "Back")
-            photonEndPosition.SetZ( photonEndPosition.z() + shiftFromFacet );
+        Debug(3 , Form("angle %.1f deg. < TIR = %.1f deg., so emerge from waveguide!",
+                       aux.rad2deg(photonTrajectoryAngleWithPlane), aux.rad2deg(wgmaring->GetTotalInternalReflectionAngle())));
+        
+        this -> ApplySnellDivergence( wgmaring -> facetNormals.at(facetIdx) , wgmaring -> GetRefractiveIndex() );
+        photonInWaveguideMargin = false;
+        return;
     }
+    
 }

@@ -43,3 +43,12 @@
     <WaveguideRefractiveIndex>   1.5    </WaveguideRefractiveIndex>
     
 </Waveguide>
+
+
+<WaveguideMargin>
+    
+    <WaveguideMarginLength>   200       </WaveguideMarginLength>  <!-- mm -->
+    
+</WaveguideMargin>
+
+

@@ -39,9 +39,21 @@
 
 <Waveguide>
     
-    <WaveguideWidth>    40            </WaveguideWidth>   <!-- mm -->
+    <WaveguideWidth>    30              </WaveguideWidth>   <!-- mm -->
+    <WaveguideThickness>    30          </WaveguideThickness>   <!-- mm -->
     <WaveguideLength>   200             </WaveguideLength>  <!-- mm -->
-    <WaveguideAbsorbtionLength>   10000  </WaveguideAbsorbtionLength>  <!-- mm -->
-    <WaveguideRefractiveIndex>   1.58    </WaveguideRefractiveIndex>
+    <WaveguideAbsorbtionLength>   10000 </WaveguideAbsorbtionLength>  <!-- mm -->
+    <WaveguideRefractiveIndex>   1.58   </WaveguideRefractiveIndex>
     
 </Waveguide>
+
+
+
+<WaveguideMargin>
+    
+    <WaveguideMarginLength>   1000       </WaveguideMarginLength>  <!-- mm -->
+    
+</WaveguideMargin>
+
+
+

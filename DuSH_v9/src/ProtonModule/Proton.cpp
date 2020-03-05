@@ -39,7 +39,7 @@ void Proton::DrawTrajectory(int trajColor){
 
 
 // ------------------------------------------------------- //
-void Proton::Shoot( Bar * bar , auxiliary * aux , bool fdebugMode, Waveguide * waveguide){
+void Proton::Shoot( Bar * bar , auxiliary * aux , bool fdebugMode, Waveguide * waveguide, WaveguideMargin * wgmargin){
     Debug(2, "Proton::Shoot()");
     debugMode = fdebugMode;
     if (debugMode) Debug(0, "working in debug mode");
@@ -76,7 +76,7 @@ void Proton::Shoot( Bar * bar , auxiliary * aux , bool fdebugMode, Waveguide * w
                            photonYield_MeVee,bar -> GetPhotonsPerMeV() * photonYield_MeVee,Nphotons) );
             
             if (DoProduceScintillationPhotons){ // flag to suppress this for debugging purposes
-                ProduceScintillationPhotons( bar, aux, Nphotons, StepPos , waveguide );
+                ProduceScintillationPhotons( bar, aux, Nphotons, StepPos , waveguide , wgmargin );
             }
             
             // of course, when the proton produced scintillation photons it looses some energy...
@@ -246,7 +246,9 @@ void Proton::SetEnergyMomentum(){
 }
 
 // ------------------------------------------------------- //
-void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphotons, TVector3 EmissionPos , Waveguide * waveguide ){
+void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux,
+                                         int Nphotons, TVector3 EmissionPos,
+                                         Waveguide * waveguide, WaveguideMargin * wgmargin ){
     Debug(2 , "Proton::ProduceScintillationPhotons()");
     
     if (debugMode){
@@ -270,8 +272,13 @@ void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphoto
         // if the photon reached front facet, move to waveguide...
         if (photon->GetArrivedAtFrontFacet()){
             photon->PropagateInWaveguide( waveguide );
+            
+            // if the photon reached waveguide exit, move to waveguide margin...
+            if (photon->GetArrivedAtWaveguideExit()){
+                photon->PropagateInWaveguideMargin( wgmargin );
+            }
         }
-        
+
         // write photon story into output csv
         // when adding values here, also add the corresponding header label at
         // program.cpp
@@ -279,6 +286,7 @@ void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphoto
         aux->write_photons_csv( {
             (double)photon->GetArrivedAtFrontFacet(),
             (double)photon->GetArrivedAtWaveguideExit(),
+            (double)photon->GetArrivedAtWaveguideMarginExit(),
             (double)photon->GetDirectFromProduction(),
             (double)photon->GetAbsorbedInScintillator(),
             (double)photon->GetAbsorbedInWaveguide(),
@@ -300,14 +308,19 @@ void Proton::ProduceScintillationPhotons( Bar * bar, auxiliary * aux, int Nphoto
             
             photon->GetHitWaveguideExitPos().X(),
             photon->GetHitWaveguideExitPos().Y(),
-            photon->GetHitWaveguideExitPos().Z()
+            photon->GetHitWaveguideExitPos().Z(),
+            
+            photon->GetHitWaveguideMarginExitPos().X(),
+            photon->GetHitWaveguideMarginExitPos().Y(),
+            photon->GetHitWaveguideMarginExitPos().Z()
         } );
         
         aux->UpdatePhotonCounts(
                                 photon->GetArrivedAtFrontFacet(),
                                 photon->GetArrivedAtWaveguideExit(),
                                 photon->GetAbsorbedInScintillator(),
-                                photon->GetAbsorbedInWaveguide()
+                                photon->GetAbsorbedInWaveguide(),
+                                photon->GetAbsorbedInWaveguideMargin()
                                 );
         
         
