@@ -15,6 +15,8 @@ TPolyLine3D( n ){
         std::cout << "photon verbosity: " << verbose << std::endl;
     }
     r = new TRandom3(0);
+    // set a new seed every time
+    r->SetSeed(r->Integer(100000));
     SetOutsideBar(); // lets start with not forcing it inside the scintillator and then put it inside when its emitted
     
     

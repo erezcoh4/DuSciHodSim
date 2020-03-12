@@ -11,6 +11,8 @@ TPolyLine3D( 2 ){
     verbose = fverbose;
     Debug( 1 , Form("Proton::Proton(), verbosity %d",verbose));
     r = new TRandom3(0);
+    // set a new seed every time
+    r->SetSeed(r->Integer(100000));
     GenerateEdepCurves();
     GenerateMeV2MeVeeCurve();
     DoProduceScintillationPhotons = true;
@@ -69,7 +71,8 @@ void Proton::Shoot( Bar * bar , auxiliary * aux , bool fdebugMode, Waveguide * w
             // since these are the units in which the scintillators vendor work.
             // and so we convert here from MeV to MeVee
             double photonYield_MeVee = MeVee_vs_MeV_proton_s3 -> Eval( Edep_MeV );
-            Int_t Nphotons = (Int_t)(bar -> GetPhotonsPerMeV() * photonYield_MeVee);
+            Int_t Nphotons = r->Poisson((bar -> GetPhotonsPerMeV() * photonYield_MeVee));
+            
             TickTime( dx_cm , bar -> GetRefractiveIndex() );
             
             Debug( 1, Form("photonYield MeVee: %.3f MeVee, out of %.2f produced %d photons",
