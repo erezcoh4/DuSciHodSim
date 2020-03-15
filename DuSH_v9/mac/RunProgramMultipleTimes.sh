@@ -21,7 +21,7 @@ echo 'creating'$outPath
 echo
 mkdir $outPath
 
-for repIdx in $(seq 100 1 $Nruns)
+for repIdx in $(seq 1 1 $Nruns)
 do
 
     cd $workdir
